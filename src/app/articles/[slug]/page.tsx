@@ -5,8 +5,9 @@ export async function generateStaticParams() {
   return listSlugs().map((s) => ({ slug: s }));
 }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = getArticleBySlug(params.slug);
+export default async function ArticlePage({ params }: { params: { slug: string } | Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = getArticleBySlug(slug);
   if (!article) {
     return <div className="py-20">Article not found.</div>;
   }
