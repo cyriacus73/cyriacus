@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Spectral } from "next/font/google";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 import Nav from "../components/ui/nav";
 import Footer from "../components/ui/footer";
