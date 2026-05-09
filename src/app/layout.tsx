@@ -30,9 +30,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${mono.variable} ${serif.variable} h-full antialiased`}>
-      <body className="min-h-full flex min-h-screen flex-col bg-bg text-text-primary">
-        <div className="mx-auto w-full max-w-[1100px] px-6">
+    <html lang="en" suppressHydrationWarning className={`${mono.variable} ${serif.variable} h-full antialiased`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const stored = localStorage.getItem('theme');
+                const theme = stored || 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-bg text-text-primary">
+        <div className="mx-auto flex min-h-screen w-full max-w-275 flex-col px-6">
           <Nav />
           <main className="flex-1">{children}</main>
           <Footer />

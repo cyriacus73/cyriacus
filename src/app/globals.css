@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
+/* ── Design system tokens ──────────────────────────────────────────────── */
+/* Default to dark theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:           #080808;
+  --bg-surface:   #111111;
+  --bg-border:    #1e1e1e;
+  --text-primary: #e8e8e8;
+  --text-muted:   #666666;
+  --text-faint:   #333333;
+  --accent:       #c8a96e;
+  --accent-cold:  #5a7a8a;
 }
 
+/* Light theme - explicit data attribute has higher specificity */
+[data-theme="light"] {
+  --bg:           #f5f5f5;
+  --bg-surface:   #ffffff;
+  --bg-border:    #e0e0e0;
+  --text-primary: #1a1a1a;
+  --text-muted:   #666666;
+  --text-faint:   #999999;
+  --accent:       #c8a96e;
+  --accent-cold:  #5a7a8a;
+}
+
+/* ── Tailwind v4 theme mapping ─────────────────────────────────────────── */
+/* Maps CSS variables → Tailwind colour utilities                          */
+/* bg-bg, text-text-primary, border-bg-border, text-accent, etc.          */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg:           var(--bg);
+  --color-bg-surface:   var(--bg-surface);
+  --color-bg-border:    var(--bg-border);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted:   var(--text-muted);
+  --color-text-faint:   var(--text-faint);
+  --color-accent:       var(--accent);
+  --color-accent-cold:  var(--accent-cold);
+
+  /* Wire up next/font variables loaded in layout.tsx */
+  --font-mono:   var(--font-mono);
+  --font-serif:  var(--font-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+/* ── Typography defaults ───────────────────────────────────────────────── */
+/* Headings default to monospace per the design spec */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Smooth link transitions */
+a {
+  transition: color 150ms ease;
 }

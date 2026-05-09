@@ -1,36 +1,112 @@
 import Link from "next/link";
 
-/**
- * Home page — short, direct introduction and links to articles.
- */
+const projects = [
+  {
+    title: "Fixed-Point Neural Network on TinyML Microcontroller",
+    description:
+      "Quadratic regression NN deployed under severe memory, precision, and compute constraints. Q-format fixed-point arithmetic, LUT-based sigmoid activation, training and inference entirely on-chip.",
+    tags: ["embedded-c", "tinyml", "q8.8"],
+    href: "https://github.com/cyriacus73/grad_quad_nn",
+  },
+  {
+    title: "LQR Control, Kalman Filtering & Controllability Analysis",
+    description:
+      "LQR stabilisation of a linearised inverted pendulum system. Kalman filter for state estimation under process and measurement noise. Controllability analysis via Gramian computation and SVD.",
+    tags: ["control-theory", "state-estimation", "scipy"],
+    href: "https://github.com/cyriacus73/systems-control-projects",
+  },
+  {
+    title: "Symmetric Linear Antenna Array Optimisation",
+    description:
+      "Peak Side Lobe Level minimisation on an n-element array using Differential Evolution with exclusion beamwidth constraints. Performance benchmarked against published literature.",
+    tags: ["differential-evolution", "optimisation", "rf"],
+    href: null,
+  },
+  {
+    title: "Rabbit Hole",
+    description:
+      "Graph-structured AI system for non-linear knowledge exploration. Node–thread data model with LLM inference, source-aware traversal, and full-stack persistence in Next.js and MongoDB.",
+    tags: ["graph-systems", "mongodb", "next.js"],
+    href: "https://findtherabbit.app",
+  },
+];
+
 export default function Home() {
   return (
     <section className="py-20">
       <div className="mx-auto" style={{ maxWidth: 720 }}>
-        <h1 className="font-mono text-4xl leading-tight">I write about systems, code, and machines.</h1>
-        <p className="mt-6 font-serif text-lg leading-8 text-text-muted">
-          I am Cyriacus — an electrical engineering student. This site is a public record
-          of what I build and think about: TinyML on microcontrollers, control theory,
-          and software systems for real problems.
+
+        <p className="font-mono text-xs text-text-faint tracking-widest uppercase mb-4">
+          Elochukwu Daniel Cyriacus
+        </p>
+        <h1 className="font-mono text-3xl leading-snug text-text-primary">
+          I build systems — embedded,<br />distributed, occasionally physical.
+        </h1>
+        <p className="mt-5 font-serif text-lg leading-8 text-text-muted">
+          Electrical and electronics engineer. My work sits at the intersection of
+          control theory, constrained inference, and intelligent autonomy.
+          This site is a record of what I build and think about.
         </p>
 
-        <div className="mt-8 flex gap-4">
+        <div className="mt-14">
+          <p className="font-mono text-3xl text-text-faint tracking-widest uppercase mb-1">
+            Projects
+          </p>
+          <div className="border-t border-bg-border">
+            {projects.map((project, i) => (
+              <div key={i} className="border-b border-bg-border py-7">
+                {project.href ? (
+                  <Link
+                    href={project.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-sm text-text-primary hover:text-accent"
+                  >
+                    {project.title}
+                  </Link>
+                ) : (
+                  <span className="font-mono text-sm text-text-primary">
+                    {project.title}
+                  </span>
+                )}
+                <p className="mt-2 font-serif text-base leading-7 text-text-muted">
+                  {project.description}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {project.tags.map((tag) => (
+                    <span key={tag} className="font-mono text-xs text-accent">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12">
+          <p className="font-mono text-xs text-text-faint tracking-widest uppercase mb-4">
+            Currently
+          </p>
+          <ul className="space-y-2">
+            <li className="font-serif text-base text-text-muted leading-7">
+              Learning ROS2 and robotic systems programming.
+            </li>
+            <li className="font-serif text-base text-text-muted leading-7">
+              Thinking seriously about swarm aerial robotics and distributed control.
+            </li>
+          </ul>
+        </div>
+
+        <div className="mt-12">
           <Link
             href="/articles"
-            className="inline-block rounded-sm border border-bg-border px-4 py-2 font-mono text-sm text-text-primary hover:text-accent"
+            className="inline-block border border-bg-border px-4 py-2 font-mono text-sm text-text-primary hover:text-accent hover:border-accent"
           >
-            Read articles
+            Read articles →
           </Link>
         </div>
 
-        <div className="mt-12 border-t border-bg-border pt-8 text-sm text-text-faint">
-          <strong className="font-mono">Currently</strong>
-          <ul className="mt-3 ml-4 list-disc">
-            <li>Building EKAM — an AI BI platform for creators.</li>
-            <li>Research on TinyML model quantization for low-power MCUs.</li>
-            <li>Thinking about swarm aerial robotics and distributed control.</li>
-          </ul>
-        </div>
       </div>
     </section>
   );

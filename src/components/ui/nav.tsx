@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ThemeToggle from "./theme-toggle";
 
 /**
  * Site navigation bar.
@@ -14,11 +15,14 @@ export default function Nav() {
         </Link>
       </div>
       <nav>
-        <ul className="flex gap-6">
+        <ul className="flex gap-6 items-center">
           <li>
             <Link href="/articles" className="font-mono text-sm text-text-muted hover:text-accent">
               Articles
             </Link>
+          </li>
+          <li>
+            <ThemeToggle />
           </li>
         </ul>
       </nav>
