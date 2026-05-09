@@ -1,0 +1,171 @@
+---
+title: "Error, Memory, and Prediction: The Mathematics of PID"
+date: "2026-05-09"
+description: "Most explanations of PID tell you what the three terms do. This one derives why they have to exist — starting from nothing but an error signal and some calculus."
+tags:
+  - control-theory
+  - pid
+  - mathematics
+status: "published"
+math: true
+---
+
+A motor is spinning at 140 RPM. You want it at a 100. You have one input: how much current to send. The motor does not know the target speed, it just responds to current. Your job then is to decide, at every moment in time, how much current to send and to keep making that decision until the motor reaches 100 RPM and stays there.
+
+This is a control problem. Almost every control problem has the same shape: a system with a measurable state, a desired state you want it to reach, and an input you can adjust. Your entire job as a controller, is to decide what that input should be at each moment in time.
+
+The first thing you need is a way to quantify how wrong things currently are.
+
+## The Error Signal
+
+Let $r(t)$ be the reference—what you want the system to be doing— and let $y(t)$ be the output—what the system is actually doing— The difference between them is the error:
+
+$$e(t) = r(t) - y(t)$$
+
+This is the most important signal in control theory. Everything a controller does is, in some sense, a response to $e(t)$. When $e(t) = 0$, the system is exactly where you want it. When $e(t)$ is large and positive, the system is falling short. When $e(t)$ is large and negative, it has overshot.
+
+The most important question then is given $e(t)$, what should the control input $u(t)$ be?
+
+## The First Guess: Proportional Control
+
+The most natural answer is also the most obvious one. If the error is large, push hard. If the error is small, push softly. Scale the control input in direct proportion to the error.
+
+$$u(t) = K_p \, e(t)$$
+
+This is proportional control. $K_p$ is a constant you choose — the proportional gain. A larger $K_p$ means a more aggressive response to any given error. The motor is 40 RPM too slow? Send current proportional to 40. It's 5 RPM too slow? Send current proportional to 5.
+
+This actually works. The system moves toward the reference. The error shrinks. In many systems, increasing $K_p$ makes the response faster — the controller reacts more forcefully to any deviation, and the system corrects more quickly.
+
+But something is wrong.
+
+_Why doesn't it correct all the way to zero?_
+
+Let's take a moment to think on it. The proportional controller is doing exactly what it's supposed to do. It is pushing harder when the error is larger, and softer when the error is smaller. The error is getting smaller, but it never quite reaches zero. Why?
+
+The answer is mechanical, but the insight is mathematical. To hold the motor at 100 RPM against friction and load, the controller must supply some constant nonzero current. And for a proportional controller to supply nonzero current, there must be nonzero error. The equation demands it: if $e(t) = 0$, then $u(t) = K_p \cdot 0 = 0$. No current. No corrective force. The motor slows.
+
+If the motor ever reached the target exactly, the proportional controller would stop applying correction entirely. But the external load still exists, so the motor would immediately begin slowing down again. To continuously counteract the load, the controller must continuously apply some nonzero effort — and with proportional control, that requires some nonzero error to remain.
+
+## Steady-State Error
+
+This persistent gap has a name. The steady-state error is the value the error converges to as time goes to infinity:
+
+$$e_{ss} = \lim_{t \to \infty} e(t)$$
+
+For a proportional controller, $e_{ss}$ is in general nonzero. You can reduce it by increasing $K_p$ — a higher gain means the equilibrium error is smaller, since less error is needed to generate sufficient output. But increasing $K_p$ has limits. Push it too high and the system becomes unstable, oscillating around the reference instead of settling at it.
+
+With proportional control alone, reducing steady-state error requires increasingly aggressive corrections. You can make the system more accurate by increasing $K_p$, but eventually the response becomes unstable, oscillatory, or excessively sensitive.
+
+So you are stuck, you can have speed or accuracy. Not both.
+
+The problem is that the proportional term has no memory. It only knows what the error is _right now_. It has no awareness of how long the error has persisted, how much correction has already been applied, or whether the system has been slightly wrong for the last ten seconds. Every moment is evaluated in isolation.
+
+What if it wasn't?
+
+## The Integral Term: Memory
+
+Instead of reacting only to the current error, what if the controller also reacted to the accumulated history of the error? Every moment the system has been off-target should count for something.
+
+See a proportional controller has a fundamental limitation: it can only produce correction while error exists.
+
+If the motor requires a constant amount of current to fight friction or load, then a proportional controller must preserve some constant error to generate that current. Zero error means zero proportional output.
+
+The mathematical tool for accumulating a signal over time is the integral. Define a new control term:
+
+$$u_I(t) = K_i \int_0^t e(\tau) \, d\tau$$
+
+This term sums up all the error from the start of time to the present moment. If the motor remains even slightly below the target speed, the integral keeps growing. That growing integral increases the controller output more and more, gradually adding additional current to the motor.
+
+_But does this actually guarantee the error goes to zero, or does it just reduce it further?_
+
+With proportional control alone, maintaining a constant corrective force required a constant error. But the integral term can store that corrective force internally.
+
+Imagine the motor settles at 95 RPM instead of 100 RPM. The remaining error persists, so the integral slowly accumulates:
+
+- after one second: a little extra correction
+- after ten seconds: more correction
+- after enough time: enough stored correction to fully counter the load
+
+Eventually the controller provides enough current to maintain 100 RPM exactly.
+
+And here is the important part:
+
+Once the error reaches zero, the integral does not disappear. The accumulated value remains stored inside the controller.
+
+So even at perfect speed, the controller can continue supplying the constant current needed to fight friction and maintain equilibrium.
+
+This is why integral control eliminates steady-state error.
+
+A proportional controller needs present error to create present effort.
+
+An integral controller can use past error to maintain present effort.
+
+<Callout type="insight">
+  The only value of $e_{ss}$ compatible with a bounded, stable system containing
+  an integrator is zero. Sustained nonzero error is mathematically impossible.
+  The integral term accumulates until the error is eliminated, because that is
+  the only state in which it stops growing.
+</Callout>
+
+## A New Problem
+
+You now have a controller that does two things: react to current error (P) and accumulate past error (I). The steady-state problem is solved. But something else has emerged.
+
+Consider what happens when the error is large and the integral has been accumulating for several seconds. The controller is pushing hard — harder, in fact, than it needs to, because the integral has been building up while the system was slow to respond. By the time the system actually reaches the reference, the integral term has grown large enough to drive the system _past_ the target. The motor overshoots 100 RPM, dips to 95, and the whole process begins again in the opposite direction.
+
+This is called overshoot, and in many systems it is merely annoying. In others it is catastrophic. A quadrotor drone trying to hold altitude doesn't get to overshoot and oscillate — an overshoot is a crash. The controller needs to know not just that the error is decreasing, but that it is decreasing _fast enough_ to stop in time.
+
+_What information would a controller need to anticipate an overshoot before it happens?_
+
+The answer is already in the signal. If the error is currently 10 RPM but decreasing at 20 RPM per second, the system will reach zero in half a second under its own momentum — no additional push required. The rate of change of the error tells you where the error is going, not just where it is.
+
+## The Derivative Term: Prediction
+
+The rate of change of a signal is its derivative. Define the third control term:
+
+$$u_D(t) = K_d \frac{de(t)}{dt}$$
+
+When the error is decreasing rapidly — the system is converging fast — $\frac{de}{dt}$ is large and negative. The derivative term subtracts from the total output, damping the controller's aggression precisely when the system is already moving in the right direction. It acts as a brake, anticipating the approach to zero and pulling back before the overshoot can develop.
+
+This is not prediction in any deep sense. The derivative term does not know the future. It extrapolates the current trend linearly — it assumes the error will continue changing at its present rate, and acts accordingly. For well-behaved systems, this assumption holds long enough to be useful. The correction arrives early enough to prevent the overshoot without knowing in advance that one was coming.
+
+The derivative term is also sensitive to noise. If the error signal is noisy — fluctuating rapidly due to sensor imperfections — its derivative will be enormous even when the true error is stable. In practice, derivative control is often applied to the measured output rather than the error directly, or low-pass filtered, precisely because of this. But that is an implementation concern. Mathematically, the term is exactly what it claims to be: a response to how fast the error is changing.
+
+## The Combined Controller
+
+You now have three terms, each addressing a distinct failure mode of the others. Assembled together:
+
+$$u(t) = K_p e(t) + K_i \int_0^t e(\tau) \, d\tau + K_d \frac{de(t)}{dt}$$
+
+Now the controller has three ways to respond to the same error signal.
+
+The proportional term reacts immediately. If the error is large, the system pushes hard. If it is small, it eases off. Nothing is remembered; everything is local in time.
+
+The integral term changes that. It doesn’t care what the error is right now, only that it has existed for a while. A small but persistent offset slowly builds into a correction that cannot be ignored. It is what removes the system’s tendency to “almost” settle.
+
+The derivative term goes in the opposite direction. It watches how the error is moving and starts resisting when things approach the target too quickly. If the system is already correcting fast, it steps in early and slows the response before it overshoots.
+
+Together they don’t describe three independent actions. They correct three different ways a single signal can mislead you: what it is now, how long it has been wrong, and where it is heading next.
+
+<Callout type="note">
+  The three gains $K_p$, $K_i$, and $K_d$ are free parameters. Choosing them —
+  tuning the controller — is a separate problem from understanding what the
+  terms mean. A poorly tuned PID controller can still oscillate, overshoot, or
+  respond too slowly. But the structure of the controller, the reason these
+  three terms and not some other combination, follows directly from the analysis
+  above.
+</Callout>
+
+It is worth pausing on what the integral term is doing geometrically. At any time $t$, $\int_0^t e(\tau) \, d\tau$ is the signed area under the error curve since the controller was switched on. Positive area means the system has spent more time below the reference than above it. Negative area means the opposite. The integral term is, in a precise sense, keeping score — and adjusting the output to settle that score.
+
+The derivative term is doing something equally concrete. $\frac{de}{dt}$ is the slope of the error signal at the current instant. If the error is a function plotted against time, the derivative term is reading the tangent line and acting on its steepness. A steep downward slope means the system is converging fast; the derivative term reduces the output to prevent overshoot. A steep upward slope means the error is growing fast; the derivative term increases the output as an early warning response.
+
+What is remarkable is that these three quantities — the value, the integral, and the derivative of $e(t)$ — are, in a sense, the first three things you can know about a function at a point. Its height, its accumulated history, its instantaneous rate of change. PID is not an arbitrary combination of mathematical operations. It is the minimal set of operations needed to respond to a signal in time.
+
+## What We Have Not Said
+
+We built this entire controller in the time domain. Every argument was made in terms of signals evolving in time, corrections accumulating over seconds, derivatives as slopes of curves.
+
+There is another way to look at it — one that makes the structure even clearer. In the frequency domain, each term in the PID controller corresponds to a specific operation on the error signal's spectral content. The integral adds a pole at the origin of the complex plane. The derivative adds a zero. The reasons these operations guarantee zero steady-state error, and the conditions under which they fail, become almost geometric.
+
+That is the s-domain view, and it is where the second part of this picks up.
