@@ -36,9 +36,9 @@ export default function Home() {
     <section className="py-20">
       <div className="mx-auto" style={{ maxWidth: 720 }}>
 
-        <p className="font-mono text-xs text-text-faint tracking-widest uppercase mb-4">
+        {/* <p className="font-mono text-xs text-text-faint tracking-widest uppercase mb-4">
           Elochukwu Daniel Cyriacus
-        </p>
+        </p> */}
         <h1 className="font-mono text-3xl leading-snug text-text-primary">
           I build systems — embedded,<br />distributed, occasionally physical.
         </h1>

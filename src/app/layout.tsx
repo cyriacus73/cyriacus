@@ -18,7 +18,7 @@ const serif = Spectral({
 });
 
 export const metadata: Metadata = {
-  title: "Cyriacus — Notes and essays",
+  title: "Cyriacus' Mind",
   description: "Writing on systems, TinyML, robotics, and technical thinking.",
 };
 

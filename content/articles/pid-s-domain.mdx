@@ -1,0 +1,209 @@
+---
+title: "PID from the Outside: A Transfer Function View"
+date: "2026-05-10"
+description: "The time domain shows what a PID controller does. The s-domain shows what it is — and what questions it answers that the time domain cannot."
+tags:
+  - control-theory
+  - laplace-transform
+  - transfer-functions
+  - pid
+status: "published"
+math: true
+---
+
+> The thing about math, right — especially if you're talking about pure axiomatized math — the experience as a student is that you are going through a textbook, and it starts with saying, 'Here are the axioms of this field,' and then we're going to deduce from those axioms various different lemmas and theorems and proceed from that.
+>
+> And with that as the framing, you get the impression that you could have just come up with any axioms. Like, you just make up some pile of axioms, deduce what follows from them, and the space of possible math is unfathomably huge — and so you need some process that culls down what are the useful things to maybe pursue.
+>
+> And so one of the things that I think is all too often missing in those pure math textbooks is, basically, the motivating problem. Why is it that _this_ was the set of axioms people found to be useful, and not something else?
+
+— Grant Sanderson (3Blue1Brown)
+
+The Laplace transform is one of those tools. In most courses it arrives announced but unmotivated — here is the definition, here are the transform pairs, now apply them. I remember asking why this? What question, exactly, does this thing answer that nothing else does?
+
+This deserves an honest answer before we use the tool. And the honest answer starts with a limitation.
+
+## What the Time Domain Cannot Tell You
+
+In the [first part of this series](/articles/error-memory-prediction-pid), we built a PID controller entirely in the time domain. It worked. The proportional term reacted to present error, the integral term accumulated past error, the derivative term damped the approach.
+
+But two big questions remained open.
+
+**The first:** a real system is never responding to just one thing. The motor from part one isn't receiving a clean step command in isolation. It's being hit constantly with mechanical vibrations from the load, electrical noise from the current sensor, slow thermal drift changing winding resistance and sudden external disturbances. These arrive simultaneously, mixed together with the signal the controller receives. The controller doesn't automatically distinguish them. It sees one number changing in time, and it reacts. Hence the question is:
+
+_Which of these things should it react to?_
+
+The reference command, yes. The sensor noise, almost definitely not. Amplifying noise into the output means the motor shudders at the frequency of the electrical interference, which is both inefficient and destructive. A good controller needs to respond to slow, meaningful changes while rejecting fast, meaningless noise. In the time domain, there is no natural way to describe this distinction. We can observe what happened for a specific input, but cannot make a general statement about how the controller treats fast signals differently from slow ones.
+
+**The second:** the time domain tells you whether a system is stable — simulate it, does it blow up or settle? Binary answer. But binary is not enough. A system can be technically stable but be one degree of gain away from oscillating, that clearly is not something you'd want to deploy. How much gain can you add before the system goes unstable? How much delay can it tolerate? How far from the edge are you? These are questions about margin, not just state, and the time domain has no clean language for them.
+
+We have in our hands two questions and we introduce a tool to answer them both.
+
+## What Frequency Actually Means Here
+
+Before introducing this tool, _frequency_ needs to mean something more precise than “how fast something oscillates.”
+
+Fourier's result is that any signal can be written as a sum of sinusoids at different frequencies. Even a step input(a sudden jump from one value to another) can be decomposed into infinitely many sinusoidal components.
+
+This matters because linear systems treat each frequency component separately. If you know how a controller responds to a sinusoid at angular frequency $\omega$, you can reconstruct its response to more complicated inputs built from those same frequencies.
+
+This changes the question entirely. Instead of asking only how the controller responds over time, we can ask what frequencies it amplifies and what frequencies it suppresses.
+
+Slow changes in the reference are low-frequency signals. Rapid sensor noise is high-frequency. A controller that tracks the former while attenuating the latter behaves, in effect, like a low-pass filter.
+
+The time domain does not make this distinction easy to see. In the s-domain, it becomes explicit.
+
+## The Change of Coordinates
+
+The Laplace transform is a change of coordinates. Instead of describing a signal as a function of time $t$, we describe it as a function of a complex variable $s$. The transform itself is defined by an integral, but the integral is not what matters here. What matters are three facts that follow from it.
+
+**Fact one.** Differentiation in time becomes multiplication by $s$:
+
+$$\mathcal{L}\left\{\frac{df}{dt}\right\} = s \, F(s)$$
+
+**Fact two.** Integration in time becomes division by $s$:
+
+$$\mathcal{L}\left\{\int_0^t f(\tau) \, d\tau\right\} = \frac{F(s)}{s}$$
+
+**Fact three.** Evaluating a transformed signal at $s = j\omega$ where $j = \sqrt{-1}$ and $\omega$ is a angular frequency in rads per sec gives the signal's behaviour at that frequency. Specifically, $|F(j\omega)|$ is how much the system scales a sinusoid at frequency $\omega$, and $\angle F(j\omega)$ is how much it shifts the phase.
+
+Evaluating a transfer function at $s = j\omega$ therefore asks a precise question: if the input oscillates at frequency $\omega$, how much does the system amplify it, and how much does it delay or advance it in phase?
+
+These three facts are enough. The derivation of why they hold — what the complex exponential $e^{-st}$ is doing, why integration maps to division — is worth pursuing separately. For now, the facts are the tool.
+
+<Callout type="note">
+  The variable $s$ is complex: $s = \sigma + j\omega$. The real part $\sigma$
+  governs how signals grow or decay over time. The imaginary part $\omega$
+  governs oscillation frequency. A pole at $s = -2 + 3j$ means the corresponding
+  mode decays at rate 2 while oscillating at frequency 3. The geometry of the
+  complex plane encodes the full temporal behaviour of a signal in a single
+  point.
+</Callout>
+
+## Transforming the PID Controller
+
+In part one, we arrived at the control law:
+
+$$u(t) = K_p \, e(t) + K_i \int_0^t e(\tau) \, d\tau + K_d \frac{de(t)}{dt}$$
+
+Taking the Laplace transform of both sides and applying the three facts above, term by term:
+
+$$U(s) = K_p \, E(s) + K_i \frac{E(s)}{s} + K_d \, s \, E(s)$$
+
+Factoring out $E(s)$:
+
+$$U(s) = \left( K_p + \frac{K_i}{s} + K_d s \right) E(s)$$
+
+The ratio $\frac{U(s)}{E(s)}$ is the transfer function of the controller — the function that maps error to control output in the s-domain. We call it $C(s)$:
+
+$$C(s) = K_p + \frac{K_i}{s} + K_d s$$
+
+Every term from part one is present. The proportional term is unchanged. The integral is $\frac{K_i}{s}$ — division by $s$. The derivative is $K_d s$ — multiplication by $s$. Writing this as a single rational function:
+
+$$C(s) = \frac{K_d s^2 + K_p s + K_i}{s}$$
+
+_What does this structure actually tell us?_
+
+## Poles, Zeros, and the Geometry of Behaviour
+
+The transfer function $C(s)$ is a ratio of two polynomials:
+
+$$C(s) = \frac{N(s)}{D(s)}$$
+
+The roots of the numerator $N(s)$ are called zeros. The roots of the denominator $D(s)$ are called poles.
+
+If a value $s_0$ makes the numerator zero, then:
+
+$$C(s_0) = 0$$
+
+If a value $s_0$ makes the denominator zero, the transfer function becomes unbounded:
+
+$$C(s) \to \infty \quad \text{as } s \to s_0$$
+
+Those values $s_0$ are the poles and zeros of the system.
+
+This may sound purely algebraic, but their locations in the complex plane determine how the system behaves dynamically.
+
+Poles correspond to the system's natural modes of behaviour — oscillations and exponential growth or decay. Zeros shape how the system responds to inputs, strengthening or suppressing certain behaviours.
+
+Frequency response appears when we evaluate the transfer function along the imaginary axis:
+
+$$s = j\omega$$
+
+The denominator of $C(s)$ is simply $s$. Its only root is:
+
+$$s = 0$$
+
+So the PID controller contains a pole exactly at the origin of the complex plane — the integrator term expressed as a pole in the s-plane.
+
+_[DIAGRAM: Pole-zero plot of C(s) — pole at origin marked ×, two zeros in left half-plane marked ○.]_
+
+<Callout type="note">
+  The positions of poles and zeros in the complex plane determine how the system
+  responds dynamically — how it oscillates, how quickly it settles, and which
+  frequencies it amplifies or suppresses.
+</Callout>
+
+## The Pole at the Origin
+
+Evaluating the integrator term along the imaginary axis:
+
+$$\left|\frac{K_i}{j\omega}\right| = \frac{K_i}{\omega}$$
+
+As $\omega \to 0$, the gain grows without bound. The controller therefore applies extremely large gain to signals near zero frequency — signals that are nearly constant in time.
+
+A constant steady-state error is exactly such a signal. If a nonzero steady-state error persists, the integral term continues growing, driving the controller output until the error is removed.
+
+This is the s-domain version of the argument from part one. In the time domain, the integral accumulated persistent error over time. In the s-domain, the same fact appears geometrically as a pole at the origin, corresponding to infinite gain at DC.
+
+## The Derivative Term as a High-Pass Filter
+
+Return now to the first motivation. The derivative term contributes $K_d s$ to $C(s)$. Evaluating at $s = j\omega$:
+
+$$|K_d \cdot j\omega| = K_d \omega$$
+
+The magnitude grows linearly with frequency. At low frequencies, the derivative term contributes almost nothing. At high frequencies, it dominates. This is the definition of a high-pass filter — and it is the exact reason derivative control amplifies noise.
+
+The time domain observation was that D reacts violently to rapid changes. The s-domain explanation is sharper: $K_d s$ amplifies a signal in direct proportion to its frequency. A noise signal at twice the frequency receives twice the gain. This is the very structure of derivative control.
+
+This is why practical implementations of derivative control apply it to the measured output $y(t)$ rather than the error $e(t)$ directly, or pass it through a low-pass filter before differentiating. The problem is not with the concept of anticipating overshoot — that reasoning holds. The problem is that $K_d s$ cannot distinguish the derivative of the reference error from the derivative of sensor noise, and at high frequencies, noise wins.
+
+## The Closed-Loop Picture
+
+So far we have examined $C(s)$ in isolation. But a controller does not operate alone. It sits inside a loop, producing a signal that drives a plant — the physical system being controlled. Let $G(s)$ be the transfer function of the plant, mapping control input $U(s)$ to output $Y(s)$.
+
+_[DIAGRAM: Standard feedback block diagram — reference R(s), summing junction producing E(s), controller C(s), plant G(s), output Y(s), unity feedback path.]_
+
+With controller and plant connected in a negative feedback loop, the closed-loop transfer function from reference $R(s)$ to output $Y(s)$ is:
+
+$$T(s) = \frac{C(s)G(s)}{1 + C(s)G(s)}$$
+
+The numerator is the forward path gain. The denominator is the critical quantity. Setting it to zero:
+
+$$1 + C(s)G(s) = 0$$
+
+This is the characteristic equation. Its roots — the values of $s$ for which the denominator vanishes — are the poles of the closed-loop system. And the poles of the closed-loop system determine everything: stability, settling time, oscillatory behaviour, sensitivity to disturbances. The controller's job, in the s-domain, is to shape where these poles land.
+
+## Stability as Geometry
+
+In the time domain, stability is a question you answer by simulation. In the s-domain, it is a geometric statement.
+
+Every closed-loop pole is a complex number $s_i = \sigma_i + j\omega_i$. The real part $\sigma_i$ determines whether the corresponding mode of the system decays or grows over time. If $\sigma_i < 0$ — the pole is in the left half-plane — the mode decays exponentially. If $\sigma_i > 0$ — the pole is in the right half-plane — it grows without bound. If $\sigma_i = 0$ — the pole is on the imaginary axis — the mode sustains itself indefinitely.
+
+The imaginary axis is the stability boundary. Everything to the left is stable. Everything to the right is not.
+
+_[DIAGRAM: Complex plane — imaginary axis as boundary, left half-plane labelled stable with arrows showing increasing decay rate with distance from axis, right half-plane labelled unstable.]_
+
+But the imaginary axis is also a margin. A system with poles at $\sigma = -0.01$ is stable in the strict sense, and one small parameter change away from the boundary. A system with poles at $\sigma = -10$ has a wide margin. The distance from the closed-loop poles to the imaginary axis is the stability margin — not a vague qualitative assessment, but a measurable geometric quantity.
+
+This is what gain margin and phase margin quantify — how far, in specific senses, the system is from the boundary. They are not abstract safety factors. They are distances in the complex plane, made measurable by the s-domain representation.
+
+## What We Now Have
+
+The s-domain did not give us a new controller. It gave us a map of the one we already built.
+
+With $C(s)$ in hand, both questions from the beginning have answers. The first — what does the controller amplify, what does it reject — is visible in $C(j\omega)$: infinite gain at DC from the pole at the origin, linear high-frequency amplification from the derivative term, a rolloff between them set by the zeros. The second — how far from instability — is visible in the location of the closed-loop poles relative to the imaginary axis.
+
+Neither was a new fact. Both were always true. The s-domain is the language in which they become visible.
+
+The next article in this series builds the toolkit for reading that map — Bode plots, Nyquist diagrams, root locus — the instruments for working in the coordinates we have just derived.

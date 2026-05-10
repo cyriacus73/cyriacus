@@ -5,7 +5,7 @@ description: "Most explanations of PID tell you what the three terms do. This on
 tags:
   - control-theory
   - pid
-  - mathematics
+  - differential-equations
 status: "published"
 math: true
 ---
@@ -125,11 +125,24 @@ The rate of change of a signal is its derivative. Define the third control term:
 
 $$u_D(t) = K_d \frac{de(t)}{dt}$$
 
-When the error is decreasing rapidly — the system is converging fast — $\frac{de}{dt}$ is large and negative. The derivative term subtracts from the total output, damping the controller's aggression precisely when the system is already moving in the right direction. It acts as a brake, anticipating the approach to zero and pulling back before the overshoot can develop.
+But before discussing what this term does, it is worth being precise about _why_ overshoot happens at all.
 
-This is not prediction in any deep sense. The derivative term does not know the future. It extrapolates the current trend linearly — it assumes the error will continue changing at its present rate, and acts accordingly. For well-behaved systems, this assumption holds long enough to be useful. The correction arrives early enough to prevent the overshoot without knowing in advance that one was coming.
+When the error is large, the proportional and integral terms are both pushing hard. The system accelerates toward the reference. But as the error shrinks, the controller doesn't automatically know the system is about to arrive — it only knows the error is currently small. By the time $e(t) = 0$, the system has physical momentum carrying it past zero. The correction that was appropriate ten seconds ago is still partially present in the integral, still partially present in the proportional term an instant before crossing zero. Overshoot is not a malfunction. It is the natural consequence of a controller that reacts to error without knowing how close it is to eliminating it.
 
-The derivative term is also sensitive to noise. If the error signal is noisy — fluctuating rapidly due to sensor imperfections — its derivative will be enormous even when the true error is stable. In practice, derivative control is often applied to the measured output rather than the error directly, or low-pass filtered, precisely because of this. But that is an implementation concern. Mathematically, the term is exactly what it claims to be: a response to how fast the error is changing.
+The derivative term addresses this directly. If the error is currently $e(t)$ and decreasing at rate $\frac{de}{dt}$, then under the current trend the system will reach zero in approximately:
+
+$$t_{arrival} \approx -\frac{e(t)}{\frac{de}{dt}}$$
+
+The derivative term does not compute this explicitly. But by contributing $K_d \frac{de}{dt}$ to the output — a quantity that is large and negative when the error is shrinking fast — it effectively reduces the controller's aggression in proportion to how rapidly the system is converging. The faster the approach, the harder the brake.
+
+<Callout type="insight">
+  The derivative term is not reacting to overshoot. It is reacting to the
+  *approach* — reducing output while the error is still nonzero, before the
+  crossing, precisely because the rate of change signals that a crossing is
+  imminent. This is what makes it preventive rather than corrective.
+</Callout>
+
+This is not prediction in any deep sense. The derivative term extrapolates the current trend linearly and acts on that extrapolation. For well-behaved systems, this is sufficient — the correction arrives early enough to prevent the overshoot without any knowledge of the future. What it is sensitive to, however, is noise. If the error signal fluctuates rapidly due to sensor imperfections, $\frac{de}{dt}$ will be large even when the true error is stable, and the derivative term will react violently to measurement artifacts rather than real dynamics. In practice this is managed — filtered, or applied to the output rather than the error directly — but that is an implementation concern. The mathematical role of the term is exact: it reads the slope of the error curve and acts on it.
 
 ## The Combined Controller
 
