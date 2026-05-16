@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Spectral } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+import Script from "next/script";
 import Nav from "../components/ui/nav";
 import Footer from "../components/ui/footer";
 
@@ -33,16 +34,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${mono.variable} ${serif.variable} h-full antialiased`}>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const stored = localStorage.getItem('theme');
-                const theme = stored || 'dark';
-                document.documentElement.setAttribute('data-theme', theme);
-              })();
-            `,
-          }}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
+        <meta name="theme-color" content="#ffffff" />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: `(function() {
+            try {
+              const stored = localStorage.getItem('theme');
+              const theme = stored || 'light';
+              document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {}
+          })();` }}
         />
       </head>
       <body className="min-h-screen bg-bg text-text-primary">

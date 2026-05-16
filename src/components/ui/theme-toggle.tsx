@@ -8,12 +8,12 @@ import { Sun, Moon } from "lucide-react";
  * Stores preference in localStorage and sets data-theme attribute on <html>.
  */
 export default function ThemeToggle() {
-  const [state, setState] = useState({ dark: true, mounted: false });
+  const [state, setState] = useState({ dark: false, mounted: false });
 
   useEffect(() => {
     // Only run on client after hydration
-    const stored = localStorage.getItem("theme");
-    const isDark = stored ? stored === "dark" : true;
+  const stored = localStorage.getItem("theme");
+  const isDark = stored ? stored === "dark" : false;
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
     
     // Use Promise to defer state update after effect completes
