@@ -37,9 +37,19 @@ export function getAllArticles(): Article[] {
     } as Article;
   });
 
+  // Filter out drafts in production. Drafts should be visible during local
+  // development only (NODE_ENV !== 'production'). This keeps unpublished
+  // articles from being listed or statically generated in production builds.
+  const includeDrafts = process.env.NODE_ENV !== "production";
+  const visible = articles.filter((a) => {
+    const status = a.frontmatter?.status?.toLowerCase?.();
+    if (status === "draft" && !includeDrafts) return false;
+    return true;
+  });
+
   // sort desc by date
-  articles.sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? 1 : -1));
-  return articles;
+  visible.sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? 1 : -1));
+  return visible;
 }
 
 export function getArticleBySlug(slug: string): Article | null {
@@ -49,7 +59,15 @@ export function getArticleBySlug(slug: string): Article | null {
   if (!file) return null;
   const raw = fs.readFileSync(file, "utf8");
   const { data, content } = matter(raw);
-  return { slug, frontmatter: data as ArticleFrontmatter, content };
+  const front = data as ArticleFrontmatter;
+
+  // If the article is a draft, only return it when running locally. In
+  // production we intentionally hide draft articles to prevent accidental
+  // exposure via direct URL access.
+  const isDraft = typeof front.status === "string" && front.status.toLowerCase() === "draft";
+  if (isDraft && process.env.NODE_ENV === "production") return null;
+
+  return { slug, frontmatter: front, content };
 }
 
 export function listSlugs(): string[] {
