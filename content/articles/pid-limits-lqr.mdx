@@ -7,37 +7,43 @@ tags:
   - lqr
   - state-space
   - optimal-control
-status: "draft"
+status: "published"
 math: true
 ---
 
-A PID controller knows nothing about the system it controls. It doesn't need to. It sees one number — the error — and it reacts. For everything we built in the last two articles, that was enough.
+Everything about PID assumes the problem can be reduced to one error signal and one corrective response. As long as the system fits that shape, PID works remarkably well.
 
-It won't be enough here.
+The system in this article does not fit that shape.
 
 ## The Hidden Assumption
 
-Every PID controller is built around a loop: measure one output, compare it to one reference, produce one corrective input. The assumption embedded in that structure — so natural it rarely gets named — is that there is only one thing to care about at a time.
+Every PID controller is built around the same loop, it measure an output, compare it to a reference and apply a correction. One error in, one control signal out.
 
-This is not a flaw. For a motor holding a speed, it's exactly right. The error is one-dimensional, the input is one-dimensional, and the coupling between them is the only coupling that matters. PID was built for this shape of problem, and it handles it well.
+Buried inside that structure is an assumption so common it usually goes unstated: the controller is only dealing with one thing at a time.
 
-But the shape doesn't hold in general.
+For something like motor speed control, that's perfectly fine. The error is one-dimensional, the input is one-dimensional, and the interaction between them is simple enough that reacting directly to error works well.
+
+But not every system shares that shape.
 
 ## A Pendulum Standing on Its Head
 
-A cart sits on a horizontal track. A pole is hinged to it at the base — not hanging down, but balanced upright, like a broomstick on your palm. Your only input is a horizontal force on the cart.
+A cart sits on a horizontal track. A pole is hinged to it at the base — not hanging downward, but balanced upright, like a broomstick on a palm. The only control input is a horizontal force applied to the cart.
 
 The goal: keep the pole upright while controlling where the cart sits.
 
 _Can we just run two PID loops?_
 
-One loop watches the pole angle and pushes the cart to correct it. Another watches the cart position and drives it back to center. Both running simultaneously, each doing its job.
+One controller watches the pole angle and moves the cart to keep the pole balanced. Another watches the cart position and drives the cart back toward the center, both operate simultaneously, each correcting its own error signal.
 
-The problem reveals itself immediately. To correct a rightward lean in the pole, the first loop pushes the cart left. But moving the cart left disturbs the cart position, which the second loop then corrects by pushing right — which disturbs the pole again. The loops are not independent. Every corrective action in one creates an error in the other. They are not solving the problem in parallel. They are fighting each other.
+The problem appears immediately.
 
-Increasing the gain on either loop makes this worse. More aggressive correction means faster interference. The system doesn't converge — it oscillates, or it falls.
+Correcting a rightward lean in the pole requires pushing the cart left. But moving the cart left creates position error, so the second controller pushes right to correct it — which disturbs the pole again.
 
-The issue is not that PID can never stabilise the system. The issue is that the coupling has to be managed indirectly — through careful architecture and tuning — because the controller itself has no representation of the coupled state. The failure is structural.
+The loops are not independent. Every correction in one introduces error into the other. They are not solving the problem in parallel but are fighting each other.
+
+Increasing the gain on either loop makes this worse. More aggressive correction means faster interference. The system begins oscillating, or the pole falls entirely.
+
+The issue is not that PID can never stabilise the system. The issue is that the coupling has to be managed indirectly through careful architecture and tuning because the controller itself has no representation of the coupled state. This is a structural limitation.
 
 ## What PID Cannot See
 
@@ -53,9 +59,9 @@ A controller that only sees one of these at a time is working with an incomplete
 
 ## Seeing the Whole State
 
-The shift required here is not subtle. Instead of asking _what is the error in this output_, ask _what is the full state of the system, and where do I need it to go_.
+Instead of asking _what is the error in this output_, we should ask _what is the full state of the system, and where do we need it to go_.
 
-This is the state-space framing. The system is described not by a single output and a single error, but by a vector $x$ containing every variable needed to predict the future evolution of the system. The controller's job is not to react to one error signal — it is to drive the entire state vector to a desired equilibrium.
+This is the state-space framing. The system is described not by a single output and a single error, but by a vector $x$ containing every variable needed to predict the future evolution of the system. The controller's job is not to react to one error signal but to drive the entire state vector to a desired equilibrium.
 
 For the cart-pendulum, equilibrium is the state where all four quantities are simultaneously zero: cart at the origin, stationary, pole upright, not rotating. Getting there requires a controller that sees all four variables and acts on them together.
 
@@ -71,28 +77,45 @@ _Where do the weights come from?_
 
 This is where LQR earns its name.
 
-LQR stands for Linear Quadratic Regulator. The _linear_ refers to the system model — a linearised approximation of the plant dynamics around the equilibrium point. The _quadratic_ refers to the cost function — the quantity being minimised. The _regulator_ refers to the goal — driving the state to zero.
+LQR stands for Linear Quadratic Regulator.
 
-The cost function encodes a tradeoff: how much do you care about state error versus how hard the controller has to work? A controller that corrects aggressively uses a lot of input but settles fast. One that is gentle uses less input but takes longer. LQR finds the gain matrix $K$ that minimises the total cost over time — the integral of state error and control effort, weighted by two matrices you choose:
+_Linear_ refers to the model of the system: a linearised approximation of the dynamics around an equilibrium point.
 
-$Q$ penalises state error. Larger $Q$ means the controller cares more about how far the states are from equilibrium. $R$ penalises control effort. Larger $R$ means the controller is more conservative about how hard it pushes.
+_Quadratic_ refers to the cost function being minimised.
 
-You set the tradeoff. The mathematics then produces the optimal gain matrix $K$.
+_Regulator_ refers to the objective: driving the state toward equilibrium.
+
+The important idea is the cost function itself.
+
+Control is always a tradeoff. A controller can stabilise the system aggressively, using large control inputs to settle quickly. Or it can act more conservatively, using less force but taking longer to converge.
+
+LQR makes that tradeoff explicit.
+
+Instead of tuning gains by hand, a cost is defined over time: penalise the system for deviating from equilibrium, and penalise the controller for using excessive input.
+
+The weighting matrix $Q$ determines how much different state errors matter. Larger values in $Q$ mean the controller cares more strongly about keeping those states near equilibrium.
+
+The matrix $R$ penalises control effort. Larger $R$ means the controller becomes more conservative about applying force.
+
+Once the model and cost weights are specified, the mathematics produces the optimal gain matrix $K$.
 
 <Callout type="insight">
   LQR doesn't just stabilise the system. It stabilises it optimally, in the
   precise sense that no other linear controller with the same cost weights can
-  do better. The gains are not tuned by hand — they are derived from the physics
-  of the system and the cost you specify.
+  do better.
 </Callout>
 
-This is the thing PID cannot do. Not because it's less sophisticated — but because it has no cost function, no model of the plant, and no mechanism for trading off state errors against each other. It reacts to one signal. LQR reasons about the whole system.
+This is the thing PID cannot do. PID has no model of the plant, no notion of coupled state, and no cost function describing what tradeoffs matter.
+
+It reacts to error.
+
+LQR optimises behaviour.
 
 ## The Pendulum, Revisited
 
-The [simulation in this repository](https://github.com/cyriacus73/nonlinear-pendulum-lqr) starts with the pole slightly disturbed from vertical — a small push, the kind that would send a hand-balanced broomstick to the floor. The LQR controller receives the full state vector at each timestep: cart position, cart velocity, pole angle, angular velocity. It computes a single force on the cart that accounts for all four simultaneously.
+The [simulation in this repository](https://github.com/cyriacus73/nonlinear-pendulum-lqr) starts with the pole slightly disturbed from vertical — a small push, the kind that would send a hand-balanced broomstick to the floor.
 
-The pole doesn't fall. The cart doesn't drift. All four states converge to zero.
+The LQR controller receives the full state vector at each timestep and computes a single force on the cart that accounts for all four states simultaneously. The cart moves but the pole doesn't fall. All four states converge.
 
 _A pendulum standing on its head — and staying there._
 
