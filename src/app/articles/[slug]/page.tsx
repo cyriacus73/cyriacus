@@ -9,7 +9,38 @@ import Figure from "../../../components/mdx/figure";
 const components = { Callout, CodeBlock, Figure };
 
 function readingTime(content: string): number {
-  return Math.ceil(content.trim().split(/\s+/).length / 200);
+  // detect special content
+  const inlineMathMatches = content.match(/\$[^$\n]+\$/g) || [];
+  const displayMathMatches = content.match(/\$\$[\s\S]*?\$\$/g) || [];
+  const codeBlockMatches = content.match(/```[\s\S]*?```/g) || [];
+  const imageMatches = content.match(/!\[.*?\]\(.*?\)/g) || [];
+
+  // count words after stripping fenced code and math (we'll account for them separately)
+  const stripped = content
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/\$[^$\n]+\$/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .trim();
+
+  const words = stripped ? stripped.split(/\s+/).filter(Boolean).length : 0;
+
+  // tuning parameters (adjust to taste)
+  const WPM = 180; // technical reader baseline (words per minute)
+  const inlineMathSecs = 24;   // extra seconds per inline formula
+  const displayMathSecs = 80; // extra seconds per display equation
+  const codeBlockSecs = 30;   // extra seconds per fenced code block
+  const imageSecs = 8;        // seconds per image/figure
+
+  const baseSeconds = (words / WPM) * 60;
+  const extraSeconds =
+    inlineMathMatches.length * inlineMathSecs +
+    displayMathMatches.length * displayMathSecs +
+    codeBlockMatches.length * codeBlockSecs +
+    imageMatches.length * imageSecs;
+
+  const totalMinutes = Math.max(1, Math.ceil((baseSeconds + extraSeconds) / 60));
+  return totalMinutes;
 }
 
 export async function generateStaticParams() {
