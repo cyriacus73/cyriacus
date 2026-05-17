@@ -8,12 +8,26 @@ const projects = [
     tags: ["embedded-c", "tinyml", "q8.8"],
     href: "https://github.com/cyriacus73/grad_quad_nn",
   },
-  {
-    title: "LQR Control, Kalman Filtering & Controllability Analysis",
+{
+    title: "LQR Control of a Nonlinear Inverted Pendulum",
     description:
-      "LQR stabilisation of a linearised inverted pendulum system. Kalman filter for state estimation under process and measurement noise. Controllability analysis via Gramian computation and SVD.",
-    tags: ["control-theory", "state-estimation", "scipy"],
-    href: "https://github.com/cyriacus73/systems-control-projects",
+      "Symbolic Jacobian computed via SymPy to linearise the cart-pendulum at the upright equilibrium. Controllability verified, LQR gains derived, and closed-loop response simulated from a disturbed initial state.",
+    tags: ["lqr", "optimal-control", "scipy"],
+    href: "https://github.com/cyriacus73/nonlinear-pendulum-lqr",
+  },
+  {
+    title: "Linear Kalman Filter for Position and Velocity Estimation",
+    description:
+      "Kalman filter implemented from scratch on a 1D constant-velocity model. Noisy position measurements fed through full predict-update cycle to recover true position and velocity. Convergence validated from a poor initial guess.",
+    tags: ["kalman-filter", "state-estimation", "numpy"],
+    href: "https://github.com/cyriacus73/linear-kf-estimation",
+  },
+  {
+    title: "Controllability Gramian and SVD Analysis",
+    description:
+      "Finite-horizon controllability Gramian computed via numerical integration for the linearised cart-pendulum system. SVD decomposition reveals principal controllability directions and minimum control energy per state.",
+    tags: ["controllability", "gramian", "svd"],
+    href: "https://github.com/cyriacus73/gramain-svd",
   },
   {
     title: "Symmetric Linear Antenna Array Optimisation",
