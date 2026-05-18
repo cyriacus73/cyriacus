@@ -9,40 +9,48 @@ import Figure from "../../../components/mdx/figure";
 const components = { Callout, CodeBlock, Figure };
 
 function readingTime(content: string): number {
-  // detect special content
-  const inlineMathMatches = content.match(/\$[^$\n]+\$/g) || [];
-  const displayMathMatches = content.match(/\$\$[\s\S]*?\$\$/g) || [];
-  const codeBlockMatches = content.match(/```[\s\S]*?```/g) || [];
-  const imageMatches = content.match(/!\[.*?\]\(.*?\)/g) || [];
+  const displayMathRegex = /\$\$[\s\S]*?\$\$/g;
+  const inlineMathRegex = /\$[^$\n]+\$/g;
+  const codeBlockRegex = /```[\s\S]*?```/g;
+  const imageRegex = /!\[.*?\]\(.*?\)/g;
 
-  // count words after stripping fenced code and math (we'll account for them separately)
+  const displayMath = content.match(displayMathRegex) || [];
+
+  const withoutDisplayMath = content.replace(displayMathRegex, ' ');
+
+  const inlineMath = withoutDisplayMath.match(inlineMathRegex) || [];
+  const codeBlocks = content.match(codeBlockRegex) || [];
+  const images = content.match(imageRegex) || [];
+
   const stripped = content
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
-    .replace(/\$[^$\n]+\$/g, ' ')
-    .replace(/<[^>]+>/g, ' ')
+    .replace(codeBlockRegex, ' ')
+    .replace(displayMathRegex, ' ')
+    .replace(inlineMathRegex, ' ')
+    .replace(/<\/?[A-Za-z][^>]*>/g, ' ')
     .trim();
 
-  const words = stripped ? stripped.split(/\s+/).filter(Boolean).length : 0;
+  const words = stripped
+    ? stripped.split(/\s+/).filter(Boolean).length
+    : 0;
 
-  // tuning parameters (adjust to taste)
-  const WPM = 180; // technical reader baseline (words per minute)
-  const inlineMathSecs = 24;   // extra seconds per inline formula
-  const displayMathSecs = 80; // extra seconds per display equation
-  const codeBlockSecs = 30;   // extra seconds per fenced code block
-  const imageSecs = 8;        // seconds per image/figure
+  const mathDensity =
+    (inlineMath.length + displayMath.length * 2) /
+    Math.max(words, 1);
 
-  const baseSeconds = (words / WPM) * 60;
-  const extraSeconds =
-    inlineMathMatches.length * inlineMathSecs +
-    displayMathMatches.length * displayMathSecs +
-    codeBlockMatches.length * codeBlockSecs +
-    imageMatches.length * imageSecs;
+  const WPM =
+    mathDensity > 0.02 ? 140 :
+    mathDensity > 0.01 ? 160 :
+    180;
 
-  const totalMinutes = Math.max(1, Math.ceil((baseSeconds + extraSeconds) / 60));
-  return totalMinutes;
+  const totalSeconds =
+    (words / WPM) * 60 +
+    inlineMath.length * 12 +
+    displayMath.length * 40 +
+    codeBlocks.length * 25 +
+    images.length * 8;
+
+  return Math.max(1, Math.ceil(totalSeconds / 60));
 }
-
 export async function generateStaticParams() {
   return listSlugs().map((s) => ({ slug: s }));
 }
