@@ -32,7 +32,7 @@ export default function ContactPage() {
               rel="noopener noreferrer"
               className="text-text-primary hover:text-accent font-mono text-base transition-colors"
             >
-              github.com/cyriacus
+              github.com/cyriacus73
             </a>
           </div>
 
@@ -44,7 +44,7 @@ export default function ContactPage() {
               rel="noopener noreferrer"
               className="text-text-primary hover:text-accent font-mono text-base transition-colors"
             >
-              @cyriacus
+              @cyriacus73
             </a>
           </div>
         </div>
