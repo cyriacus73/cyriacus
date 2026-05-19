@@ -17,6 +17,11 @@ export default function Nav() {
       <nav>
         <ul className="flex gap-6 items-center">
           <li>
+            <Link href="/contact" className="font-mono text-sm text-text-muted hover:text-accent">
+              Contact
+            </Link>
+          </li>
+          <li>
             <Link href="/articles" className="font-mono text-sm text-text-muted hover:text-accent">
               Articles
             </Link>
