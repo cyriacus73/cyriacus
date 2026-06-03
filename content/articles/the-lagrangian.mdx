@@ -1,0 +1,231 @@
+---
+title: "The Lagrangian"
+date: "2026-06-03"
+description: "Where equations of motion actually come from. From work and potential energy to D'Alembert's principle, Hamilton's principle, and why the Lagrangian is K minus U — derived, not assumed."
+tags:
+  - classical-mechanics
+  - lagrangian-mechanics
+  - hamilton
+  - variational-principles
+  - physics
+status: "draft"
+math: true
+---
+
+After part one of this article, you should watch [this video](https://www.youtube.com/watch?v=QbnkIdw0HJQ) as this article is written to be read alongside it. The video is excellent. This article is meant to be slower and aims to not jump any steps and take you along for the ride so that you don't feel like the answers arrive from nowhere.
+
+This is also a continuation of sorts from the [LQR article](/articles/pid-limits-lqr. I promised an introduction to the Lagrangian and Jacobian so the future work doesn't feel foregin. But the physics here stands on its own — you don't need to have read the controls series.
+
+One note on notation: the video uses $U$ for potential energy. So do we. You'll sometimes see $V$ elsewhere — same thing.
+
+## Part One — The Foundations
+
+### Work
+
+Start with something concrete. You push a box across a floor. You've done work. What does that mean, precisely?
+
+Work is the energy transferred to an object by a force acting over a displacement. If you push with force $\vec{F}$ and the object moves by $d\vec{s}$, the work done is:
+
+$$dW = \vec{F} \cdot d\vec{s}$$
+
+The dot product is important. Force is a vector — it has a direction. Displacement is a vector — it has a direction. Only the component of force _parallel_ to the displacement does work. If you push horizontally and the object moves horizontally, all the force counts. If the surface pushes up on the box while the box moves horizontally, the surface does no work — the force and the displacement are perpendicular, so $\vec{F} \cdot d\vec{s} = 0$.
+
+For a force that varies along a path (which is the general case — gravity changes with height, springs change with extension), you integrate:
+
+$$W_{12} = \int_1^2 \vec{F} \cdot d\vec{s}$$
+
+This is the total work done in moving from point 1 to point 2 along some path.
+
+### From Work to Potential Energy
+
+Here's something remarkable about certain forces: the work they do doesn't depend on the path you take. Move a mass from the floor to a table by carrying it straight up, or by carrying it diagonally, or by some winding route — gravity does the same work regardless. Same with a spring, same with an electrostatic force.
+
+Forces with this property are called _conservative_. And for any conservative force, the fact that the work integral is path-independent means it must equal the change in some scalar function that depends only on position. That function is $-U$:
+
+$$W_{12} = -\Delta U = -(U_2 - U_1) = U_1 - U_2$$
+
+We define it with a negative sign because forces point in the direction that _lowers_ energy. Gravity pulls down because that's the direction potential energy decreases. More precisely:
+
+$$\vec{F} \cdot d\vec{s} = -dU \implies \vec{F} = -\nabla U$$
+
+The minus sign in $\vec{F} = -\nabla U$ is not a convention to memorise — it's a statement about nature. Forces point downhill on the energy landscape. Hooke's law $F = -kx$ is this exact relationship for a spring: the further you stretch it, the harder it pulls back, always toward the minimum.
+
+<Callout type="insight">
+  The reason conservative forces are special is that they're reversible. The
+  work you do against gravity going up is returned to you going down.
+  Non-conservative forces (friction, drag) are not reversible — energy
+  disappears into heat. The Lagrangian framework, at this stage, applies cleanly
+  to conservative forces.
+</Callout>
+
+### Normal Force
+
+When you place a book on a table, the table pushes back. This is the normal force. It's easy to treat it as a magical bookkeeping force — "whatever is needed to maintain equilibrium" — and leave it at that. That's unsatisfying.
+
+What's actually happening: the atoms in the table and the atoms in the book carry electrons. As the two surfaces approach, electron clouds overlap and the Pauli exclusion principle resists — no two electrons can occupy the same quantum state. This resistance manifests as a repulsive force. The normal force is quantum mechanics at short range.
+
+More important for what follows: the normal force is always perpendicular to the surface. That's a geometric fact about contact forces. A surface can push but not (ordinarily) pull, and the push is always normal to the surface — hence the name.
+
+This perpendicularity is about to do enormous work for us.
+
+### Virtual Displacement
+
+This is the concept that separates Lagrangian mechanics from Newtonian mechanics. It is also the concept that, in my experience, gets the most hand-waving. Let's be careful.
+
+A real displacement $d\vec{r}$ happens in time — it's where a particle actually goes in the next instant $dt$.
+
+A _virtual displacement_ $\delta\vec{r}$ is different. It's an imaginary, instantaneous nudge — you hold time fixed ($\delta t = 0$) and ask: _if I moved the particle a tiny bit in some direction that doesn't violate the constraints, what would happen?_ No time passes. Nothing actually moves. It's a thought experiment.
+
+The word _virtual_ is doing the work "thought experiment" is too casual to do. Formally: a virtual displacement is any infinitesimal change in configuration that is consistent with the constraints at a fixed instant.
+
+What does "consistent with the constraints" mean? If a bead is threaded on a wire, it can only move along the wire. So the virtual displacement $\delta\vec{r}$ must point along the wire. Not off it.
+
+Now recall: the normal force points _perpendicular_ to the surface (or wire, or constraint surface). The virtual displacement points _along_ the surface. These two vectors are perpendicular, so:
+
+$$\vec{F}_{\text{constraint}} \cdot \delta\vec{r} = 0$$
+
+The constraint forces — normal forces, tension in rigid rods, reaction forces — do _no virtual work_. This is the key. It means we can write Newton's law in a form where constraint forces simply don't appear.
+
+### D'Alembert's Principle
+
+Newton's second law for particle $k$:
+
+$$\vec{F}_k = m_k \ddot{\vec{q}}_k$$
+
+Rearrange:
+
+$$\vec{F}_k - m_k \ddot{\vec{q}}_k = 0$$
+
+Take the dot product with virtual displacement $\delta\vec{q}_k$ and sum over all particles:
+
+$$\sum_{k=1}^n (\vec{F}_k - m_k \ddot{\vec{q}}_k) \cdot \delta\vec{q}_k = 0$$
+
+Now split $\vec{F}_k$ into applied forces (gravity, springs, whatever is actually driving the system) and constraint forces. The constraint forces vanish because $\vec{F}_{\text{constraint}} \cdot \delta\vec{q}_k = 0$. What remains:
+
+$$\sum_{k=1}^n (\vec{F}_k^{\text{applied}} - m_k \ddot{\vec{q}}_k) \cdot \delta\vec{q}_k = 0$$
+
+This is D'Alembert's principle. Constraint forces are gone. The equation involves only the forces we actually care about and the accelerations. This is the bridge from Newton to everything that follows.
+
+### Generalised Coordinates
+
+One more tool before the main event. For a single particle in 3D you need three coordinates. For ten unconstrained particles you need thirty. But most interesting systems have constraints: a pendulum bob is fixed to a rod, a bead is on a wire, planets move under central force.
+
+Constraints reduce the number of independent variables. A pendulum bob in 2D might seem to need two coordinates $(x, y)$, but the rod constrains it to a circle — one coordinate, $\theta$, is enough. A double pendulum needs two angles. The cart-pendulum system from Article 3 needs two: the cart position $x$ and the pendulum angle $\theta$.
+
+The number of independent coordinates needed to fully specify a system's configuration is its _degrees of freedom_. We label these coordinates $q_1, q_2, \ldots, q_n$ and call them generalised coordinates. They don't have to be lengths — $\theta$ is a perfectly good generalised coordinate.
+
+The payoff: when you express everything in generalised coordinates, the constraints are automatically satisfied. You never have to think about them again.
+
+---
+
+## Part Two — Hamilton's Principle
+
+This is where the Lagrangian comes from. Not as a definition — as a consequence.
+
+### From D'Alembert to $\delta(K - U)$
+
+Start from D'Alembert's principle:
+
+$$\sum_{k=1}^n \vec{F}_k \cdot \delta\vec{q}_k = \sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k$$
+
+The left side. Since our forces are conservative, $\vec{F}_k = -\nabla_k U$. The work done by applied forces under a virtual displacement is $-\delta U$:
+
+$$\sum_{k=1}^n \vec{F}_k \cdot \delta\vec{q}_k = -\delta U$$
+
+The right side needs more work. The trick is to notice that:
+
+$$\frac{d}{dt}(\dot{\vec{q}}_k \cdot \delta\vec{q}_k) = \ddot{\vec{q}}_k \cdot \delta\vec{q}_k + \dot{\vec{q}}_k \cdot \delta\dot{\vec{q}}_k$$
+
+Solving for the first term:
+
+$$\ddot{\vec{q}}_k \cdot \delta\vec{q}_k = \frac{d}{dt}(\dot{\vec{q}}_k \cdot \delta\vec{q}_k) - \dot{\vec{q}}_k \cdot \delta\dot{\vec{q}}_k$$
+
+Also notice that $\dot{\vec{q}}_k \cdot \delta\dot{\vec{q}}_k = \frac{1}{2}\delta(|\dot{\vec{q}}_k|^2)$, since the variation $\delta$ acts like a differential on scalar quantities. Summing over all particles with mass factors:
+
+$$\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k - \frac{1}{2}\sum_{k=1}^n m_k \delta(|\dot{\vec{q}}_k|^2)$$
+
+The second term on the right is $-\delta K$, where $K = \frac{1}{2}\sum_k m_k |\dot{\vec{q}}_k|^2$ is the total kinetic energy. So:
+
+$$\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k + \delta K$$
+
+Putting the two sides together:
+
+$$-\delta U = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k + \delta K$$
+
+Rearranging:
+
+$$\delta(K - U) = \frac{d}{dt}\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k$$
+
+This is the result shown in Image 1. The left side is the variation of the difference between kinetic and potential energy. The right side is a pure total time derivative.
+
+### Integrating — and Why the Boundary Term Vanishes
+
+Integrate both sides from $t_1$ to $t_2$:
+
+$$\delta\int_{t_1}^{t_2}(K - U)\,dt = \int_{t_1}^{t_2}\frac{d}{dt}\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k\,dt$$
+
+The right side is the integral of a total time derivative — by the fundamental theorem of calculus, it just evaluates at the endpoints:
+
+$$= \sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k\,\Bigg|_{t_1}^{t_2}$$
+
+Now we impose the boundary condition: $\delta\vec{q}_k = 0$ at $t_1$ and $t_2$. _Why?_ Because we're asking which path — out of all paths connecting two fixed points in time — is the physical one. The start and end are fixed. We're only varying the middle. So the virtual displacement at the endpoints is zero, and the boundary term vanishes:
+
+$$\delta\int_{t_1}^{t_2}(K - U)\,dt = 0$$
+
+This is Hamilton's principle, derived — not postulated.
+
+<Callout type="insight">
+  The boundary condition $\delta q = 0$ at the endpoints is not a trick. It's a
+  statement about what question we're asking: given where the system is at $t_1$
+  and where it is at $t_2$, which path does it take? The endpoints are not up
+  for variation. Only the trajectory between them is.
+</Callout>
+
+### What is the Action?
+
+We define:
+
+$$S[q(t)] = \int_{t_1}^{t_2} L\,dt \quad \text{where} \quad L = K - U$$
+
+$S$ is called the _action_. $L$ is called the _Lagrangian_. Hamilton's principle says:
+
+$$\delta S = 0$$
+
+The physical trajectory is the one for which the action is stationary.
+
+_Stationary_ means: if you nudge the path by an infinitesimal variation $\delta q$, the action doesn't change to first order. This is the same sense in which a function has a stationary point — at a maximum or minimum, the first derivative is zero. But here we're not optimising a function, we're optimising a _functional_ — a function that takes a whole path as input and returns a number.
+
+The variation $\delta S$ is defined as:
+
+$$\delta S = S[q(t) + \delta q(t)] - S[q(t)]$$
+
+To first order in $\delta q$. We keep only the leading-order term — the same logic as a Taylor expansion where $\delta q$ is small enough that $(\delta q)^2$ is negligible compared to $\delta q$.
+
+### Why L = K − U Specifically
+
+This is the question Goldstein doesn't answer satisfyingly. Let's be explicit.
+
+We didn't choose $L = K - U$. It emerged. Look at the derivation: we started from Newton's second law and D'Alembert's principle. We manipulated the algebra. What appeared on the left side of the equation, naturally, was $\delta(K - U)$. That quantity integrated to zero — not because we wanted it to, but because the boundary terms vanished.
+
+So the Lagrangian $L = K - U$ is not a postulate about how to do mechanics differently. It is what falls out of Newton's laws when you ask about virtual displacements and conservative forces. The action principle is a repackaging of $F = ma$, not an alternative to it.
+
+<Callout type="insight">
+  This is why the Lagrangian is $K - U$ rather than $K + U$ (total energy).
+  Total energy is conserved — it doesn't change along the path. The *difference*
+  $K - U$ is what captures the dynamics, because it responds to the shape of the
+  trajectory. The system trades kinetic and potential energy as it moves — their
+  difference is the thing that, integrated over time, is stationary on the
+  physical path.
+</Callout>
+
+---
+
+## What We Have
+
+Hamilton's principle in one line:
+
+$$\delta\int_{t_1}^{t_2}L\,dt = 0 \qquad L = K - U$$
+
+The physical path is the one that makes the action stationary. This is exact, not approximate. It applies to any conservative mechanical system. It requires no knowledge of constraint forces — they vanished with D'Alembert. And it arrived directly from $F = ma$.
+
+What we don't yet have: the equations of motion. Hamilton's principle tells us that the physical path satisfies $\delta S = 0$ — but it doesn't yet tell us _what equations that path must satisfy_. Extracting those equations requires asking what $\delta S = 0$ actually implies about $L$ and $q(t)$. That calculation — the calculus of variations applied to this functional — is the Euler-Lagrange equation. That's the next article.
