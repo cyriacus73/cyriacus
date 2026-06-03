@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-const projects = [
+const projects = [  
+  {
+    title: "ROS 2 LQR Inverted Pendulum Controller",
+    description:
+      "Real-time inverted pendulum control system in ROS 2 with a 3-node architecture for simulation, control, and telemetry over ROS topics. Nonlinear dynamics linearised symbolically, LQR feedback implemented at 200 Hz, real-time data logging and closed-loop analysis.",
+    tags: ["ros2", "lqr", "docker", "control-systems"],
+    href: "https://github.com/cyriacus73/ros_lqr",
+  },
   {
     title: "Fixed-Point Neural Network on TinyML Microcontroller",
     description:
@@ -8,13 +15,14 @@ const projects = [
     tags: ["embedded-c", "tinyml", "q8.8"],
     href: "https://github.com/cyriacus73/grad_quad_nn",
   },
-{
+  {
     title: "LQR Control of a Nonlinear Inverted Pendulum",
     description:
       "Symbolic Jacobian computed via SymPy to linearise the cart-pendulum at the upright equilibrium. Controllability verified, LQR gains derived, and closed-loop response simulated from a disturbed initial state.",
     tags: ["lqr", "optimal-control", "scipy"],
     href: "https://github.com/cyriacus73/nonlinear-pendulum-lqr",
   },
+
   {
     title: "Linear Kalman Filter for Position and Velocity Estimation",
     description:
