@@ -22,13 +22,13 @@ One note on notation: the video uses $U$ for potential energy. So do we. You'll 
 
 ### Work
 
-Start with something concrete. You push a box across a floor. You've done work. What does that mean, precisely?
+Starting with something concrete. Say we push a box across a floor, some work is done. What does that mean, precisely?
 
-Work is the energy transferred to an object by a force acting over a displacement. If you push with force $\vec{F}$ and the object moves by $d\vec{s}$, the work done is:
+Work is the energy transferred to an object by a force acting over a displacement. If we push with force $\vec{F}$ and the object moves by $d\vec{s}$, the work done is:
 
 $$dW = \vec{F} \cdot d\vec{s}$$
 
-The dot product is important. Force is a vector — it has a direction. Displacement is a vector — it has a direction. Only the component of force _parallel_ to the displacement does work. If you push horizontally and the object moves horizontally, all the force counts. If the surface pushes up on the box while the box moves horizontally, the surface does no work — the force and the displacement are perpendicular, so $\vec{F} \cdot d\vec{s} = 0$.
+The dot product is important. Both Force and displacement are vectors. The work done depends on the component of force that is parallel to the displacement. If we push at an angle, only the part of our push that is in the direction of motion does work. If the surface pushes up on the box while the box moves horizontally, the surface does no work — the force and the displacement are perpendicular, so $\vec{F} \cdot d\vec{s} = 0$.
 
 For a force that varies along a path (which is the general case — gravity changes with height, springs change with extension), you integrate:
 
@@ -38,53 +38,53 @@ This is the total work done in moving from point 1 to point 2 along some path.
 
 ### From Work to Potential Energy
 
-Here's something remarkable about certain forces: the work they do doesn't depend on the path you take. Move a mass from the floor to a table by carrying it straight up, or by carrying it diagonally, or by some winding route — gravity does the same work regardless. Same with a spring, same with an electrostatic force.
+Certain forces are path-independent, the work they do only depends on the start and end points, not the path taken. Say you carry a mass to a certain height. The work done against gravity is the same whether you take a straight line or a spiral. Springs and electrostatic forces behave the same way.
 
-Forces with this property are called _conservative_. And for any conservative force, the fact that the work integral is path-independent means it must equal the change in some scalar function that depends only on position. That function is $-U$:
+These are called _conservative_ forces.
 
-$$W_{12} = -\Delta U = -(U_2 - U_1) = U_1 - U_2$$
+If the work integral is path-independent, it can only depend on where you started and where you ended. So it must equal the change in some scalar function of position alone. That function is $-U$:
 
-We define it with a negative sign because forces point in the direction that _lowers_ energy. Gravity pulls down because that's the direction potential energy decreases. More precisely:
+$$W_{12} = -\Delta U = U_1 - U_2$$
+
+As for why it is negative? Let's firstly look at Hooke's law for a spring: $F = -kx$. If you stretch a spring and let go, it snaps back in an opposite direction hence we see that the force opposes the displacement, similarly for gravity, if you lift an object up, gravity pulls it down. The work done by these forces is negative because they resist the displacement. The potential energy $U$ increases as you stretch the spring or lift the object, so the work done by the force is negative of that increase.
+
+In general, forces point towards lower energy — gravity pulls down because that's the direction potential energy decreases. In differential form:
 
 $$\vec{F} \cdot d\vec{s} = -dU \implies \vec{F} = -\nabla U$$
 
-The minus sign in $\vec{F} = -\nabla U$ is not a convention to memorise — it's a statement about nature. Forces point downhill on the energy landscape. Hooke's law $F = -kx$ is this exact relationship for a spring: the further you stretch it, the harder it pulls back, always toward the minimum.
-
-<Callout type="insight">
-  The reason conservative forces are special is that they're reversible. The
-  work you do against gravity going up is returned to you going down.
-  Non-conservative forces (friction, drag) are not reversible — energy
-  disappears into heat. The Lagrangian framework, at this stage, applies cleanly
-  to conservative forces.
-</Callout>
+Non-conservative forces like friction don't have this property — the work depends on path, energy bleeds into heat, and no scalar $U$ exists for them. The Lagrangian framework, at this stage, handles conservative forces only.
 
 ### Normal Force
 
-When you place a book on a table, the table pushes back. This is the normal force. It's easy to treat it as a magical bookkeeping force — "whatever is needed to maintain equilibrium" — and leave it at that. That's unsatisfying.
+The textbook version "whatever force the surface needs to exert to prevent penetration" describes the outcome, it leaves much wanting.
 
-What's actually happening: the atoms in the table and the atoms in the book carry electrons. As the two surfaces approach, electron clouds overlap and the Pauli exclusion principle resists — no two electrons can occupy the same quantum state. This resistance manifests as a repulsive force. The normal force is quantum mechanics at short range.
+What actually happens? As two surfaces approach, their electron clouds overlap. The Pauli exclusion principle resists this — electrons cannot share quantum states. This resistance is the normal force. It isn't just some abstract "force" that exists, it is a real physical phenomenon arising from quantum mechanics.
 
-More important for what follows: the normal force is always perpendicular to the surface. That's a geometric fact about contact forces. A surface can push but not (ordinarily) pull, and the push is always normal to the surface — hence the name.
+The geometrically important fact: this repulsion acts perpendicular to the surface. The surface can push but not pull, and it always pushes normal to itself. Hence the name.
 
-This perpendicularity is about to do enormous work for us.
+<Callout type="insight">
+  The normal force between a bead and a wire, a book and a table, your hand and
+  a wall — same mechanism every time. Electron clouds resist overlap. The
+  direction is always perpendicular to the contact surface.
+</Callout>
 
 ### Virtual Displacement
 
-This is the concept that separates Lagrangian mechanics from Newtonian mechanics. It is also the concept that, in my experience, gets the most hand-waving. Let's be careful.
+This is where Lagrangian mechanics diverges from Newtonian mechanics.
 
-A real displacement $d\vec{r}$ happens in time — it's where a particle actually goes in the next instant $dt$.
+A real displacement $d\vec{r}$ happens in time — it's where the particle actually goes in the next instant $dt$.
 
-A _virtual displacement_ $\delta\vec{r}$ is different. It's an imaginary, instantaneous nudge — you hold time fixed ($\delta t = 0$) and ask: _if I moved the particle a tiny bit in some direction that doesn't violate the constraints, what would happen?_ No time passes. Nothing actually moves. It's a thought experiment.
+A _virtual_ displacement $\delta\vec{r}$ is different. If time is frozen you ask: if I nudged the particle infinitesimally in a direction that doesn't violate the constraints, what directions are available? Nothing actually moves. No time passes. It's a thought experiment.
 
-The word _virtual_ is doing the work "thought experiment" is too casual to do. Formally: a virtual displacement is any infinitesimal change in configuration that is consistent with the constraints at a fixed instant.
-
-What does "consistent with the constraints" mean? If a bead is threaded on a wire, it can only move along the wire. So the virtual displacement $\delta\vec{r}$ must point along the wire. Not off it.
-
-Now recall: the normal force points _perpendicular_ to the surface (or wire, or constraint surface). The virtual displacement points _along_ the surface. These two vectors are perpendicular, so:
+For a bead threaded on a wire, the virtual displacement must point along the wire — that's the only motion the constraint allows. The normal force from the wire points perpendicular to it. So:
 
 $$\vec{F}_{\text{constraint}} \cdot \delta\vec{r} = 0$$
 
-The constraint forces — normal forces, tension in rigid rods, reaction forces — do _no virtual work_. This is the key. It means we can write Newton's law in a form where constraint forces simply don't appear.
+Constraint forces do no virtual work. Remember that the dot product ensures that only the component of the force in the direction of the virtual displacement contributes to the work. The bead is constrained to move along the wire, so its virtual displacement is tangent to the wire. The wire’s force on the bead is perpendicular to the wire, meaning it is always perpendicular to the allowed motion. Perpendicular vectors have zero dot product, so $$\vec{F}_{\text{constraint}} \cdot \delta\vec{r} = 0$$. Because of this, constraint forces do not contribute to the work and effectively drop out of the analysis.
+
+The key idea is: the bead can only move along the wire, and the wire can only push normal to itself. Since allowed motion is tangent and force is normal at every point, there is no component of force in the direction of motion, so no work is done.
+
+This is why we care so much about the Langrangian formulation. In Newtonian mechanics, we have to know the normal force to write down $F = ma$ for the bead. In Lagrangian mechanics, we never have to know it. The constraint forces vanish from the equations of motion because they do no virtual work.
 
 ### D'Alembert's Principle
 
@@ -104,23 +104,21 @@ Now split $\vec{F}_k$ into applied forces (gravity, springs, whatever is actuall
 
 $$\sum_{k=1}^n (\vec{F}_k^{\text{applied}} - m_k \ddot{\vec{q}}_k) \cdot \delta\vec{q}_k = 0$$
 
-This is D'Alembert's principle. Constraint forces are gone. The equation involves only the forces we actually care about and the accelerations. This is the bridge from Newton to everything that follows.
+This is D'Alembert's principle. The constraint forces are gone and the equation involves only the forces we actually care about and the accelerations.
 
 ### Generalised Coordinates
 
-One more tool before the main event. For a single particle in 3D you need three coordinates. For ten unconstrained particles you need thirty. But most interesting systems have constraints: a pendulum bob is fixed to a rod, a bead is on a wire, planets move under central force.
+One more tool before the main event. For a single particle in 3D we'd need three coordinates. For ten unconstrained particles we need thirty. But most systems have constraints: a pendulum bob is fixed to a rod, a bead is on a wire and planets move under central force.
 
-Constraints reduce the number of independent variables. A pendulum bob in 2D might seem to need two coordinates $(x, y)$, but the rod constrains it to a circle — one coordinate, $\theta$, is enough. A double pendulum needs two angles. The cart-pendulum system from Article 3 needs two: the cart position $x$ and the pendulum angle $\theta$.
+Constraints reduce the number of independent variables. A pendulum bob in 2D might seem to need two coordinates $(x, y)$, but the rod constrains it to a circle — one coordinate, $\theta$, is enough. A double pendulum needs two angles.
 
 The number of independent coordinates needed to fully specify a system's configuration is its _degrees of freedom_. We label these coordinates $q_1, q_2, \ldots, q_n$ and call them generalised coordinates. They don't have to be lengths — $\theta$ is a perfectly good generalised coordinate.
 
-The payoff: when you express everything in generalised coordinates, the constraints are automatically satisfied. You never have to think about them again.
-
----
+The payoff: when we express everything in generalised coordinates, the constraints are automatically satisfied. We never have to think about them again.
 
 ## Part Two — Hamilton's Principle
 
-This is where the Lagrangian comes from. Not as a definition — as a consequence.
+This is where the Lagrangian comes from.
 
 ### From D'Alembert to $\delta(K - U)$
 
@@ -217,8 +215,6 @@ So the Lagrangian $L = K - U$ is not a postulate about how to do mechanics diffe
   difference is the thing that, integrated over time, is stationary on the
   physical path.
 </Callout>
-
----
 
 ## What We Have
 
