@@ -8,13 +8,19 @@ tags:
   - hamilton
   - variational-principles
   - physics
-status: "draft"
+status: "published"
 math: true
 ---
 
+> One of the things that I think is all too often missing in those pure math
+> textbooks is, basically, the motivating problem. Why is it that this was the
+> set of axioms people found to be useful, and not something else?
+>
+> — Grant Sanderson (3Blue1Brown)
+
 After part one of this article, you should watch [this video](https://www.youtube.com/watch?v=QbnkIdw0HJQ) as this article is written to be read alongside it. The video is excellent. This article is meant to be slower and aims to not jump any steps and take you along for the ride so that you don't feel like the answers arrive from nowhere.
 
-This is also a continuation of sorts from the [LQR article](/articles/pid-limits-lqr. I promised an introduction to the Lagrangian and Jacobian so the future work doesn't feel foregin. But the physics here stands on its own — you don't need to have read the controls series.
+This is also a continuation of sorts from the [LQR article](/articles/pid-limits-lqr). I promised an introduction to the Lagrangian and Jacobian so the future work doesn't feel foregin. But the physics here stands on its own — you don't need to have read the controls series.
 
 One note on notation: the video uses $U$ for potential energy. So do we. You'll sometimes see $V$ elsewhere — same thing.
 
@@ -84,7 +90,7 @@ Constraint forces do no virtual work. Remember that the dot product ensures that
 
 The key idea is: the bead can only move along the wire, and the wire can only push normal to itself. Since allowed motion is tangent and force is normal at every point, there is no component of force in the direction of motion, so no work is done.
 
-This is why we care so much about the Langrangian formulation. In Newtonian mechanics, we have to know the normal force to write down $F = ma$ for the bead. In Lagrangian mechanics, we never have to know it. The constraint forces vanish from the equations of motion because they do no virtual work.
+This is why we care so much about the Lagrangian formulation. In Newtonian mechanics, we have to know the normal force to write down $F = ma$ for the bead. In Lagrangian mechanics, we never have to know it. The constraint forces vanish from the equations of motion because they do no virtual work.
 
 ### D'Alembert's Principle
 
@@ -152,9 +158,9 @@ $$-\delta U = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k
 
 Rearranging:
 
-$$\delta(K - U) = \frac{d}{dt}\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k$$
+$$\delta(K - U) = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k$$
 
-This is the result shown in Image 1. The left side is the variation of the difference between kinetic and potential energy. The right side is a pure total time derivative.
+The left side is the variation of the difference between kinetic and potential energy. The right side is a pure total time derivative.
 
 ### Integrating — and Why the Boundary Term Vanishes
 
@@ -170,7 +176,7 @@ Now we impose the boundary condition: $\delta\vec{q}_k = 0$ at $t_1$ and $t_2$. 
 
 $$\delta\int_{t_1}^{t_2}(K - U)\,dt = 0$$
 
-This is Hamilton's principle, derived — not postulated.
+This is Hamilton's principle, derived.
 
 <Callout type="insight">
   The boundary condition $\delta q = 0$ at the endpoints is not a trick. It's a
@@ -181,29 +187,43 @@ This is Hamilton's principle, derived — not postulated.
 
 ### What is the Action?
 
-We define:
+Virtual displacement froze time and asked: given the constraints, what directions can the system move? The answer eliminated constraint forces from the problem.
 
-$$S[q(t)] = \int_{t_1}^{t_2} L\,dt \quad \text{where} \quad L = K - U$$
+Now unfreeze time. We have a system that starts at some configuration at $t_1$ and ends at another at $t_2$. Many paths through time connect those two points. The question is: which path does the system actually take?
 
-$S$ is called the _action_. $L$ is called the _Lagrangian_. Hamilton's principle says:
+D'Alembert's condition has to hold at every instant along that path — not just at one frozen moment. The natural thing to do is accumulate it over time. That's precisely what we did when we integrated both sides of:
 
-$$\delta S = 0$$
+$$\delta(K - U) = \frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k$$
 
-The physical trajectory is the one for which the action is stationary.
+The integral accumulated D'Alembert's condition across the whole trajectory. When the boundary terms vanished, what remained was $\delta\int(K-U),dt = 0$. This isn't a new principle imposed on top of the mechanics. It is D'Alembert's principle, summed over time.
 
-_Stationary_ means: if you nudge the path by an infinitesimal variation $\delta q$, the action doesn't change to first order. This is the same sense in which a function has a stationary point — at a maximum or minimum, the first derivative is zero. But here we're not optimising a function, we're optimising a _functional_ — a function that takes a whole path as input and returns a number.
+We give $\int_{t_1}^{t_2} L,dt$ a name _the action, $S$_ because it is the single number that characterises a whole trajectory. At each instant, $L = K - U$ measures how the system is trading kinetic and potential energy. The action accumulates that measure over the entire path.
 
-The variation $\delta S$ is defined as:
+The physical trajectory is the one where the action is stationary: nudging any part of the path leaves $S$ unchanged to first order. Not minimum — stationary. The same sense in which a function has a stationary point where its derivative is zero, whether that point is a maximum, minimum, or saddle.
 
-$$\delta S = S[q(t) + \delta q(t)] - S[q(t)]$$
+_What does first order mean here?_
 
-To first order in $\delta q$. We keep only the leading-order term — the same logic as a Taylor expansion where $\delta q$ is small enough that $(\delta q)^2$ is negligible compared to $\delta q$.
+$L = K - U = \frac{1}{2}m|\dot{q}|^2 - U(q)$ depends on two things at each instant: where the system is ($q$) and how fast it's moving ($\dot{q}$). To evaluate $L$ you need both. That's why we write $L(q, \dot{q})$.
+
+When we nudge the path $q(t) \to q(t) + \delta q(t)$, the velocity changes too — velocity is just the time derivative of position, so:
+
+$$\frac{d}{dt}[q + \delta q] = \dot{q} + \delta\dot{q}$$
+
+Both arguments of $L$ are perturbed. Expanding $L$ at the nudged path is then just the multivariable Taylor expansion — for any function of two variables $f(x,y)$, a small perturbation gives $f(x+\varepsilon_1, y+\varepsilon_2) \approx f(x,y) + \frac{\partial f}{\partial x}\varepsilon_1 + \frac{\partial f}{\partial y}\varepsilon_2$. The same applies here:
+
+$$L(q + \delta q,\; \dot{q} + \delta\dot{q}) = L(q, \dot{q}) + \frac{\partial L}{\partial q}\delta q + \frac{\partial L}{\partial \dot{q}}\delta\dot{q} + \mathcal{O}(\delta q^2)$$
+
+The leading-order terms are the two partial derivative pieces — linear in $\delta q$. The remainder involves $(\delta q)^2$ and higher. Since $\delta q$ is infinitesimal, $(\delta q)^2$ is incomparably smaller and is negligible in the same way $(dx)^2$ disappears in ordinary calculus. So the variation of the action is:
+
+$$\delta S = S[q + \delta q] - S[q] = \int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q}\delta q + \frac{\partial L}{\partial \dot{q}}\delta\dot{q}\right] dt$$
+
+Setting $\delta S = 0$ means this integral must vanish for _any_ choice of $\delta q$ — any nudge to the path, anywhere in time. That condition, that it holds for arbitrary $\delta q$, is what forces specific equations on $q(t)$. Extracting those equations is the next article.
 
 ### Why L = K − U Specifically
 
 This is the question Goldstein doesn't answer satisfyingly. Let's be explicit.
 
-We didn't choose $L = K - U$. It emerged. Look at the derivation: we started from Newton's second law and D'Alembert's principle. We manipulated the algebra. What appeared on the left side of the equation, naturally, was $\delta(K - U)$. That quantity integrated to zero — not because we wanted it to, but because the boundary terms vanished.
+We didn't choose $L = K - U$. It emerged. Look at the derivation: we started from Newton's second law and D'Alembert's principle. We manipulated the algebra. What appeared on the left side of the equation, naturally, was $\delta(K - U)$. That quantity integrated to zero because the boundary terms vanished.
 
 So the Lagrangian $L = K - U$ is not a postulate about how to do mechanics differently. It is what falls out of Newton's laws when you ask about virtual displacements and conservative forces. The action principle is a repackaging of $F = ma$, not an alternative to it.
 
@@ -224,4 +244,4 @@ $$\delta\int_{t_1}^{t_2}L\,dt = 0 \qquad L = K - U$$
 
 The physical path is the one that makes the action stationary. This is exact, not approximate. It applies to any conservative mechanical system. It requires no knowledge of constraint forces — they vanished with D'Alembert. And it arrived directly from $F = ma$.
 
-What we don't yet have: the equations of motion. Hamilton's principle tells us that the physical path satisfies $\delta S = 0$ — but it doesn't yet tell us _what equations that path must satisfy_. Extracting those equations requires asking what $\delta S = 0$ actually implies about $L$ and $q(t)$. That calculation — the calculus of variations applied to this functional — is the Euler-Lagrange equation. That's the next article.
+What we don't yet have: the equations of motion. Hamilton's principle tells us that the physical path satisfies $\delta S = 0$ — but it doesn't yet tell us _what equations that path must satisfy_. Extracting those equations requires asking what $\delta S = 0$ actually implies about $L$ and $q(t)$. That calculation — the calculus of variations applied to this functional — is the Euler-Lagrange equation.
