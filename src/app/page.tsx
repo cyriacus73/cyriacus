@@ -57,21 +57,14 @@ export default function Home() {
   return (
     <section className="py-20">
       <div className="mx-auto" style={{ maxWidth: 720 }}>
-
-        {/* <p className="font-mono text-xs text-text-faint tracking-widest uppercase mb-4">
-          Elochukwu Daniel Cyriacus
-        </p> */}
         <h1 className="font-mono text-3xl leading-snug text-text-primary">
-          I build systems — embedded,<br />distributed, occasionally physical.
+          Hello, I&apos;m Cyriacus.
         </h1>
         <p className="mt-5 font-serif text-lg leading-8 text-text-muted">
-          Electrical and electronics engineer. My work sits at the intersection of
-          control theory, constrained inference, and intelligent autonomy.
-          This site is a record of what I build and think about.
+          I write about whatever I&apos;m thinking about. Lately that&apos;s been control systems, robotics, and TinyML — but who knows what&apos;s next.
         </p>
-
         <div className="mt-14">
-          <p className="font-mono text-3xl text-text-faint tracking-widest uppercase mb-1">
+          <p className="font-mono text-2xl text-text-faint tracking-widest uppercase mb-1">
             Projects
           </p>
           <div className="border-t border-bg-border">
