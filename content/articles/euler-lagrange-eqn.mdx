@@ -1,0 +1,154 @@
+---
+title: "The Euler-Lagrange Equation"
+date: "2026-06-08"
+description: "Extracting equations of motion from Hamilton's principle. Why integration by parts, what the fundamental lemma actually says, and what the Euler-Lagrange equation means physically, worked out on a simple pendulum."
+tags:
+  - classical-mechanics
+  - lagrangian-mechanics
+  - euler-lagrange
+  - variational-principles
+  - physics
+status: "draft"
+math: true
+---
+
+This is a continuation of [The Lagrangian](/articles/the-lagrangian), which derives Hamilton's principle and establishes why $L = K - U$. This article picks up from there.
+
+Last time we arrived at Hamilton's principle:
+
+$$\delta S = \delta\int_{t_1}^{t_2} L(q, \dot{q})\, dt = 0$$
+
+The physical path is the one that makes the action stationary. We know what $L$ is, we know where it came from, and we know the derivation leads directly from $F = ma$. What we don't yet have is the equation the physical path must satisfy. That is the goal here.
+
+## Where We Left Off
+
+Expanding $\delta S$ using the multivariable Taylor expansion of $L$:
+
+$$\delta S = \int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q}\,\delta q + \frac{\partial L}{\partial \dot{q}}\,\delta\dot{q}\right] dt = 0$$
+
+This must hold for _any_ choice of $\delta q$ — any nudge to the path, anywhere between $t_1$ and $t_2$, as long as $\delta q = 0$ at the endpoints.
+
+The problem is the structure of what's written. There are two terms: one involves $\delta q$, the other involves $\delta\dot{q}$. They are not independent, since $\delta\dot{q}$ is just the time derivative of $\delta q$. But as written, they appear as separate things. To extract any equation from $\delta S = 0$, we need everything under a single $\delta q$.
+
+## Why Integration by Parts
+
+This is the step that often appears without explanation, as though conjured just in time. It isn't a trick. It is the only thing that could work.
+
+The constraint is this: we have $\delta\dot{q}$ in the integral, and we need $\delta q$. These are related by differentiation: $\delta\dot{q} = \frac{d}{dt}\delta q$. So we need to move a time derivative from $\delta q$ onto something else. Integration by parts is exactly the tool for transferring derivatives between factors under an integral:
+
+$$\int_{t_1}^{t_2} u\, \frac{dv}{dt}\, dt = \left[u\, v\right]_{t_1}^{t_2} - \int_{t_1}^{t_2} \frac{du}{dt}\, v\, dt$$
+
+Applying this to the $\delta\dot{q}$ term, with $u = \frac{\partial L}{\partial \dot{q}}$ and $\frac{dv}{dt} = \delta\dot{q}$ (so $v = \delta q$):
+
+$$\int_{t_1}^{t_2} \frac{\partial L}{\partial \dot{q}}\,\delta\dot{q}\, dt = \left[\frac{\partial L}{\partial \dot{q}}\,\delta q\right]_{t_1}^{t_2} - \int_{t_1}^{t_2} \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\,\delta q\, dt$$
+
+The boundary term vanishes for the same reason it vanished before. We imposed $\delta q = 0$ at $t_1$ and $t_2$. The endpoints are fixed. We're only varying the middle.
+
+Substituting back:
+
+$$\delta S = \int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q} - \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\right]\delta q\, dt = 0$$
+
+Now everything is under one $\delta q$.
+
+## The Fundamental Lemma
+
+We have:
+
+$$\int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q} - \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\right]\delta q\, dt = 0$$
+
+The temptation is to immediately say the bracket must be zero. That step deserves scrutiny. An integral being zero doesn't usually mean the integrand is zero — $\int_0^1 x\, dx - \int_0^1 (1-x)\, dx = 0$, but neither integrand is zero.
+
+What saves us here is the phrase _for any_ $\delta q$.
+
+Call the bracket $f(t)$. The claim: if $\int_{t_1}^{t_2} f(t)\,\delta q(t)\,dt = 0$ for every smooth function $\delta q(t)$ that vanishes at the endpoints, then $f(t) = 0$ everywhere.
+
+The argument is by contradiction. Suppose $f$ is not identically zero — say it is positive at some time $t^*$. Since $f$ is continuous, it must be positive on some small interval around $t^*$. Now construct a $\delta q$ that is positive on exactly that interval and zero everywhere else, a smooth bump. The integral $\int f\,\delta q\, dt$ is then strictly positive: it is the integral of a positive function over the region where both factors are positive, with nothing elsewhere. That contradicts $\delta S = 0$.
+
+The same argument works if $f$ is negative somewhere. So $f$ can be neither positive nor negative anywhere. It is identically zero.
+
+This is the _fundamental lemma of the calculus of variations_. The "for arbitrary $\delta q$" condition is not a technicality. It is precisely what turns a statement about an integral into a statement about an equation.
+
+## The Euler-Lagrange Equation
+
+Since the integrand must vanish for all $\delta q$, the bracket itself is zero:
+
+$$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}} - \frac{\partial L}{\partial q} = 0$$
+
+This is the Euler-Lagrange equation. For a system with $n$ generalised coordinates $q_1, \ldots, q_n$, there is one such equation per coordinate:
+
+$$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial q_i} = 0 \qquad i = 1, \ldots, n$$
+
+## What the Two Terms Mean
+
+Before working an example, it is worth pausing on what the equation actually says.
+
+The second term, $\frac{\partial L}{\partial q}$, is how the Lagrangian changes when the coordinate $q$ shifts. Since $L = K - U$ and kinetic energy typically doesn't depend directly on position, this is usually $-\frac{\partial U}{\partial q}$. That is the negative gradient of potential energy, which is exactly the force: $F = -\nabla U$. So $\frac{\partial L}{\partial q}$ is the _generalised force_, the force pushing the system in the direction of coordinate $q$.
+
+The first term, $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$, requires unpacking. Start with $\frac{\partial L}{\partial \dot{q}}$: how the Lagrangian changes when velocity $\dot{q}$ increases. For a free particle, $L = \frac{1}{2}m\dot{q}^2$, so $\frac{\partial L}{\partial \dot{q}} = m\dot{q}$. That is momentum. More generally, $\frac{\partial L}{\partial \dot{q}}$ is the _generalised momentum_ conjugate to $q$. Then $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$ is the rate of change of that momentum, which is, by Newton's second law, the force.
+
+So the Euler-Lagrange equation reads:
+
+$$\underbrace{\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}}_{\text{rate of change of momentum}} = \underbrace{\frac{\partial L}{\partial q}}_{\text{generalised force}}$$
+
+It is Newton's second law, $\dot{p} = F$, written in generalised coordinates. Not an approximation of it, not an analogy. The same equation, from the other direction.
+
+## Worked Example: The Simple Pendulum
+
+A pendulum bob of mass $m$ hangs from a massless rod of length $l$, swinging in a plane. The single generalised coordinate is the angle $\theta$ from vertical.
+
+The bob moves on a circle of radius $l$, so its speed is $l\dot{\theta}$. Kinetic energy:
+
+$$K = \frac{1}{2}ml^2\dot{\theta}^2$$
+
+Taking the pivot as reference, the height of the bob below the pivot is $l\cos\theta$, so potential energy:
+
+$$U = -mgl\cos\theta$$
+
+When $\theta = 0$ the bob hangs straight down at its lowest point, $U = -mgl$. As $\theta$ increases the bob rises and $U$ increases toward zero. The sign is correct.
+
+The Lagrangian:
+
+$$L = K - U = \frac{1}{2}ml^2\dot{\theta}^2 + mgl\cos\theta$$
+
+Now the partial derivatives. The generalised momentum:
+
+$$\frac{\partial L}{\partial \dot{\theta}} = ml^2\dot{\theta}$$
+
+Its time derivative:
+
+$$\frac{d}{dt}\frac{\partial L}{\partial \dot{\theta}} = ml^2\ddot{\theta}$$
+
+The generalised force:
+
+$$\frac{\partial L}{\partial \theta} = -mgl\sin\theta$$
+
+Applying the Euler-Lagrange equation:
+
+$$ml^2\ddot{\theta} - (-mgl\sin\theta) = 0$$
+
+$$ml^2\ddot{\theta} + mgl\sin\theta = 0$$
+
+Dividing through by $ml^2$:
+
+$$\boxed{\ddot{\theta} + \frac{g}{l}\sin\theta = 0}$$
+
+The exact equation of motion for a simple pendulum, no approximations. The small-angle approximation $\sin\theta \approx \theta$ recovers the familiar $\ddot{\theta} + \frac{g}{l}\theta = 0$, giving the period $T = 2\pi\sqrt{l/g}$. But we never drew a free body diagram. We never resolved forces along and perpendicular to the rod. The tension in the rod never appeared. D'Alembert's principle eliminated it before we began.
+
+<Callout type="insight">
+  The tension in the rod is the constraint force here. The Newtonian approach
+  cannot avoid it — you need it to write the force balance. The Lagrangian
+  approach bypasses it entirely. As the system grows more complicated, a double
+  pendulum, a pendulum on a moving cart, this advantage compounds.
+</Callout>
+
+## What We Have
+
+The chain from Newton to equations of motion is now complete.
+
+Newton's second law, rewritten in virtual work form, gives D'Alembert's principle: constraint forces vanish. Integrating D'Alembert over time gives Hamilton's principle: $\delta S = 0$. Expanding $\delta S$, integrating by parts, and applying the fundamental lemma gives the Euler-Lagrange equation for each generalised coordinate:
+
+$$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial q_i} = 0$$
+
+To use it: write $K$ and $U$ in your chosen coordinates. Form $L = K - U$. Differentiate. The equations of motion follow, with no free body diagrams and no constraint forces.
+
+One thing is worth noticing. If $\frac{\partial L}{\partial q_i} = 0$ — if the Lagrangian doesn't depend explicitly on some coordinate — the Euler-Lagrange equation immediately gives $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} = 0$. The corresponding generalised momentum is conserved. A symmetry in the Lagrangian implies a conservation law. That observation has a name: Noether's theorem. That is where this goes next.

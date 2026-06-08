@@ -166,11 +166,11 @@ The left side is the variation of the difference between kinetic and potential e
 
 Integrate both sides from $t_1$ to $t_2$:
 
-$$\delta\int_{t_1}^{t_2}(K - U)\,dt = \int_{t_1}^{t_2}\frac{d}{dt}\sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k\,dt$$
+$$\delta\int_{t_1}^{t_2}(K - U)\,dt = \int_{t_1}^{t_2}\frac{d}{dt}\sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k\,dt$$
 
 The right side is the integral of a total time derivative — by the fundamental theorem of calculus, it just evaluates at the endpoints:
 
-$$= \sum_{k=1}^n m_k \ddot{\vec{q}}_k \cdot \delta\vec{q}_k\,\Bigg|_{t_1}^{t_2}$$
+$$= \sum_{k=1}^n m_k \dot{\vec{q}}_k \cdot \delta\vec{q}_k\,\Bigg|_{t_1}^{t_2}$$
 
 Now we impose the boundary condition: $\delta\vec{q}_k = 0$ at $t_1$ and $t_2$. _Why?_ Because we're asking which path — out of all paths connecting two fixed points in time — is the physical one. The start and end are fixed. We're only varying the middle. So the virtual displacement at the endpoints is zero, and the boundary term vanishes:
 
