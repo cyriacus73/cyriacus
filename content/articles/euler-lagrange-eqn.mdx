@@ -32,19 +32,21 @@ The problem is the structure of what's written. There are two terms: one involve
 
 ## Why Integration by Parts
 
-This is the step that often appears without explanation, as though conjured just in time. It isn't a trick. It is the only thing that could work.
-
-The constraint is this: we have $\delta\dot{q}$ in the integral, and we need $\delta q$. These are related by differentiation: $\delta\dot{q} = \frac{d}{dt}\delta q$. So we need to move a time derivative from $\delta q$ onto something else. Integration by parts is exactly the tool for transferring derivatives between factors under an integral:
+The question becomes: can we rewrite $\delta\dot{q}$ as $\delta q$, possibly at the cost of something else?
 
 $$\int_{t_1}^{t_2} u\, \frac{dv}{dt}\, dt = \left[u\, v\right]_{t_1}^{t_2} - \int_{t_1}^{t_2} \frac{du}{dt}\, v\, dt$$
 
-Applying this to the $\delta\dot{q}$ term, with $u = \frac{\partial L}{\partial \dot{q}}$ and $\frac{dv}{dt} = \delta\dot{q}$ (so $v = \delta q$):
+That's exactly what integration by parts does — it moves a derivative from one factor to the other. The trade is:
 
-$$\int_{t_1}^{t_2} \frac{\partial L}{\partial \dot{q}}\,\delta\dot{q}\, dt = \left[\frac{\partial L}{\partial \dot{q}}\,\delta q\right]_{t_1}^{t_2} - \int_{t_1}^{t_2} \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\,\delta q\, dt$$
+$$\int_{t_1}^{t_2} \underbrace{\frac{\partial L}{\partial \dot{q}}}_{u} \cdot \underbrace{\delta\dot{q}\, dt}_{dv} = \underbrace{\left[\frac{\partial L}{\partial \dot{q}}\delta q\right]_{t_1}^{t_2}}_{\text{boundary term}} - \int_{t_1}^{t_2} \underbrace{\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}}_{\text{derivative moves here}} \cdot \delta q\, dt$$
 
-The boundary term vanishes for the same reason it vanished before. We imposed $\delta q = 0$ at $t_1$ and $t_2$. The endpoints are fixed. We're only varying the middle.
+The derivative has moved off $\delta q$ and onto $\frac{\partial L}{\partial \dot{q}}$, at the cost of the boundary term. But the boundary term vanishes — $\delta q = 0$ at both $t_1$ and $t_2$ because the endpoints are fixed. We're only varying the middle of the path.
 
-Substituting back:
+Substituting back into $\delta S$:
+
+$$\delta S = \int_{t_1}^{t_2} \frac{\partial L}{\partial q}\delta q\, dt - \int_{t_1}^{t_2} \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\delta q\, dt = 0$$
+
+Both terms now share $\delta q$, so they can be collected under one integral:
 
 $$\delta S = \int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q} - \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\right]\delta q\, dt = 0$$
 
