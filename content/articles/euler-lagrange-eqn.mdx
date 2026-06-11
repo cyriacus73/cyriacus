@@ -58,21 +58,31 @@ We have:
 
 $$\int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q} - \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\right]\delta q\; dt = 0$$
 
-The temptation is to immediately declare the bracket zero. But it isn't obvious why as an integral being zero doesn't usually tell you anything about the integrand. $\int_0^1 x\, dx - \int_0^1 (1-x)\, dx = 0$, but neither integrand is zero anywhere on $[0,1]$ — they just cancel. So why can we conclude the bracket is zero here?
+The temptation is to immediately declare the bracket zero. But this step is the one that most treatments wave through, and it's worth being honest about why it isn't obvious.
 
-The answer is the phrase _for any_ $\delta q$.
+An integral being zero doesn't usually tell you anything about the integrand. $\int_0^1 x\, dx - \int_0^1 (1-x)\, dx = 0$, but neither integrand is zero anywhere on $[0,1]$ — the positive and negative parts simply cancel. So why can we conclude the bracket is zero here?
 
-We are not saying the integral is zero for one particular nudge. We are saying it is zero for _every possible nudge_ — any smooth function that vanishes at the endpoints. That's a much stronger condition, and it's the condition we actually have.
+First, let's be precise about what $\delta q$ actually is. It isn't a single nudge at one instant — it's a _function_ over the whole path. It says, for every moment $t$ between $t_1$ and $t_2$, how much we're shifting the path at that moment. It can be shaped however we like: a bump near the start, two bumps in the middle, anything — as long as it's smooth and zero at the endpoints.
 
-Call the bracket $f(t)$. The claim is: if $\int_{t_1}^{t_2} f(t)\,\delta q(t)\, dt = 0$ for every smooth $\delta q$ vanishing at the endpoints, then $f$ must be identically zero.
+And the condition we have isn't that the integral is zero for some particular $\delta q$. It's that the integral is zero for _every possible_ $\delta q$. Every shape. Every bump. Every choice. That is a much stronger demand.
 
-Suppose it isn't. Say $f$ is positive at some moment $t^*$. Since $f$ is continuous, it stays positive on some small interval around $t^*$. Now we get to choose $\delta q$ — any nudge we like. So we pick one that is positive on exactly that interval and zero everywhere else. A smooth bump, zero at the endpoints. With that choice, the integrand $f(t)\,\delta q(t)$ is positive on the interval and zero elsewhere. The integral is strictly positive. That contradicts $\delta S = 0$.
+One edge case worth naming: $\delta q = 0$ everywhere is technically allowed — it just means no nudge at all, the original path. But $\int f \cdot 0 \, dt = 0$ for any $f$, so this tells us nothing. The condition only has teeth because we're also ranging over nudges that are genuinely nonzero in between the endpoints — bumps that are zero at $t_1$ and $t_2$ but positive somewhere in the middle. Those are the nudges that can expose a nonzero $f$.
 
-The same argument works if $f$ is negative somewhere. So $f$ can be neither positive nor negative anywhere.
+Call the bracket $f(t)$. The condition is: for every smooth function $\delta q$ vanishing at the endpoints,
+
+$$\int_{t_1}^{t_2} f(t)\,\delta q(t)\, dt = 0$$
+
+Now suppose $f$ is not identically zero — say it's positive at some moment $t^*$. Since $f$ is continuous, it stays positive on some small interval around $t^*$.
+
+Here's the move: we get to choose $\delta q$, so we choose it to be a smooth positive bump sitting entirely within that interval, and zero everywhere outside it. No dips, no cancellation — just a clean positive hump over the region where $f > 0$.
+
+With that choice, the integrand $f \cdot \delta q$ is positive on the interval and zero everywhere else. The integral strictly accumulates positive area and never gives any back. It cannot be zero.
+
+That contradicts our condition. So $f$ cannot be positive anywhere. The same argument with a negative bump rules out $f$ being negative anywhere.
 
 $f = 0$ everywhere.
 
-This is the _fundamental lemma of the calculus of variations_. The power isn't in the algebra — it's in the fact that we have freedom to pick $\delta q$ however we like. The "for arbitrary $\delta q$" condition is what turns a statement about an integral vanishing into a statement about an equation holding pointwise.
+This is the _fundamental lemma of the calculus of variations_. The key wasn't any algebraic manipulation — it was the freedom to pick _any_ $\delta q$ we like. That freedom means we can always construct a nudge that exposes a nonzero $f$, if one exists. The only way the condition holds for every possible nudge is if $f$ gives the integral nothing to accumulate.
 
 ## The Euler-Lagrange Equation
 
@@ -80,7 +90,7 @@ So the bracket is zero:
 
 $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}} - \frac{\partial L}{\partial q} = 0$$
 
-This is the Euler-Lagrange equation. For a system with $n$ generalised coordinates $q_1, \ldots, q_n$, there is one per coordinate:
+This is the Euler-Lagrange equation. Notice what happened: the fundamental lemma fired on a single integral with a single $\delta q$, giving us one equation. But most systems have more than one degree of freedom. A double pendulum has two angles. A particle in 3D has three coordinates. For each generalised coordinate $q_i$, we get a separate integral in $\delta q_i$, and the fundamental lemma fires independently on each one — because varying $q_i$ doesn't force a variation in $q_j$. One equation per coordinate:
 
 $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial q_i} = 0 \qquad i = 1, \ldots, n$$
 
@@ -88,11 +98,25 @@ $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial
 
 Before doing an example, it's worth pausing on what the equation actually says — because the algebra can obscure that it's something we already know.
 
-Start with the second term, $\frac{\partial L}{\partial q}$. This is how the Lagrangian changes when the coordinate $q$ shifts. Since $L = K - U$, and kinetic energy usually doesn't depend directly on position, this is typically $-\frac{\partial U}{\partial q}$. That's the negative gradient of potential energy — which is the force: $F = -\nabla U$. So $\frac{\partial L}{\partial q}$ is the _generalised force_, the force pushing the system in the $q$ direction.
+**The second term: generalised force.** $\frac{\partial L}{\partial q}$ is how the Lagrangian changes when the coordinate $q$ shifts. Since $L = K - U$, and kinetic energy usually doesn't depend directly on position, this is typically $-\frac{\partial U}{\partial q}$. That's the negative gradient of potential energy — which is the force: $F = -\nabla U$. So $\frac{\partial L}{\partial q}$ is the _generalised force_, the force pushing the system in the $q$ direction.
 
-Now the first term, $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$. Unpack from the inside out. The inner piece, $\frac{\partial L}{\partial \dot{q}}$, is how the Lagrangian changes when velocity increases. For a free particle, $L = \frac{1}{2}m\dot{q}^2$, so $\frac{\partial L}{\partial \dot{q}} = m\dot{q}$. That's momentum. More generally, $\frac{\partial L}{\partial \dot{q}}$ is the _generalised momentum_ conjugate to $q$. Taking its time derivative gives the rate of change of momentum.
+**The first term: generalised momentum.** Unpack $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$ from the inside out.
 
-So the Euler-Lagrange equation is:
+Start with $\frac{\partial L}{\partial \dot{q}}$. In Cartesian coordinates, a free particle has $L = \frac{1}{2}m\dot{x}^2$, and:
+
+$$\frac{\partial L}{\partial \dot{x}} = m\dot{x}$$
+
+That's just $mv$ — ordinary momentum. So in Cartesian coordinates, $\frac{\partial L}{\partial \dot{q}}$ is exactly the momentum we know from Newton.
+
+Now consider the pendulum, where the coordinate is an angle $\theta$. We'll work this out fully in the next section, but the Lagrangian has $K = \frac{1}{2}ml^2\dot{\theta}^2$, so:
+
+$$\frac{\partial L}{\partial \dot{\theta}} = ml^2\dot{\theta}$$
+
+This is not $mv$ — it has units of $\text{kg} \cdot \text{m}^2/\text{s}$, not $\text{kg} \cdot \text{m}/\text{s}$. It's _angular_ momentum. The coordinate was an angle, and $\frac{\partial L}{\partial \dot{q}}$ automatically gave us the right kind of momentum for that coordinate — without us having to decide in advance what "momentum" should mean for a rotational system.
+
+This is why the quantity $\frac{\partial L}{\partial \dot{q}}$ is called the _generalised momentum_ conjugate to $q$. It isn't a definition by analogy. In Cartesian coordinates it _is_ $mv$. In angular coordinates it _is_ $I\omega$. It is whatever momentum means for the coordinate you chose, extracted automatically by differentiating $L$.
+
+Taking the time derivative gives the rate of change of that momentum. So the full equation reads:
 
 $$\underbrace{\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}}_{\dot{p}} = \underbrace{\frac{\partial L}{\partial q}}_{F}$$
 
