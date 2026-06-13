@@ -1,6 +1,6 @@
 ---
 title: "The Euler-Lagrange Equation"
-date: "2026-06-08"
+date: "2026-06-13"
 description: "Extracting equations of motion from Hamilton's principle. Why integration by parts, what the fundamental lemma actually says, and what the Euler-Lagrange equation means physically, worked out on a simple pendulum."
 tags:
   - classical-mechanics
@@ -8,11 +8,11 @@ tags:
   - euler-lagrange
   - variational-principles
   - physics
-status: "draft"
+status: "published"
 math: true
 ---
 
-This is a continuation of [The Lagrangian](/articles/the-lagrangian). If you haven't read that yet, the short version: we derived Hamilton's principle from Newton's second law, through D'Alembert, through virtual displacements, through algebra. The result was:
+This is a continuation of [The Lagrangian](/articles/the-lagrangian). If you haven't read that yet, here's the short version: we derived Hamilton's principle from Newton's second law, through D'Alembert, through virtual displacements. The result was:
 
 $$\delta S = \delta\int_{t_1}^{t_2} L(q, \dot{q})\, dt = 0$$
 
@@ -20,29 +20,29 @@ The physical path is the one that makes the action stationary. What we don't yet
 
 ## Where We Left Off
 
-When we expand $\delta S$ — nudging the path by $\delta q$ and keeping only first-order terms — we get:
+When we expand $\delta S$, nudging the path by $\delta q$ and keeping only the first-order terms, we get:
 
 $$\delta S = \int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q}\,\delta q + \frac{\partial L}{\partial \dot{q}}\,\delta\dot{q}\right] dt = 0$$
 
-This has to hold for _any_ nudge $\delta q$ we apply to the middle of the path, as long as the endpoints stay fixed: $\delta q = 0$ at $t_1$ and $t_2$.
+This has to hold for any nudge $\delta q$ we apply anywhere along the path, as long as the endpoints stay fixed: $\delta q = 0$ at $t_1$ and $t_2$.
 
-Now look at the structure of the integral. There are two terms. One has $\delta q$. The other has $\delta\dot{q}$. These aren't independent quantities — $\delta\dot{q}$ is just the time derivative of $\delta q$. But as written, they sit there separately, and we can't extract an equation from the integral in this form. To get anywhere, we need everything under a single $\delta q$.
+Looking at this, there are two terms, one involving $\delta q$ and the other involving $\delta\dot{q}$. These aren't independent, that is to say $\delta\dot{q}$ is just the time derivative of $\delta q$, but they currently sit separately and we can't extract an equation from the integral in this form. To get anywhere, we need everything under a single $\delta q$.
 
 ## Why Integration by Parts
 
-The problem, stated plainly: we have a $\delta\dot{q}$ term we need to turn into a $\delta q$ term. The derivative needs to move.
+The problem, stated plainly: we have a $\delta\dot{q}$ and we need a $\delta q$. The derivative needs to move.
 
-Integration by parts is the tool for moving derivatives between factors under an integral. The formula is:
+Integration by parts is exactly the tool used for moving derivatives between factors under an integral. The formula is:
 
 $$\int_{t_1}^{t_2} u\, \frac{dv}{dt}\, dt = \left[u\, v\right]_{t_1}^{t_2} - \int_{t_1}^{t_2} \frac{du}{dt}\, v\, dt$$
 
-The derivative that was on $v$ has moved onto $u$, at the cost of a boundary term. Applied to our $\delta\dot{q}$ term — with $u = \frac{\partial L}{\partial \dot{q}}$ and $dv = \delta\dot{q}\, dt$, so $v = \delta q$ — the trade is:
+The derivative that was on $v$ has moved onto $u$, at the cost of a boundary term. Applied to our $\delta\dot{q}$ term, with $u = \frac{\partial L}{\partial \dot{q}}$ and $dv = \delta\dot{q}\, dt$ so $v = \delta q$, the trade is:
 
 $$\int_{t_1}^{t_2} \underbrace{\frac{\partial L}{\partial \dot{q}}}_{u} \cdot \underbrace{\delta\dot{q}\, dt}_{dv} = \underbrace{\left[\frac{\partial L}{\partial \dot{q}}\,\delta q\right]_{t_1}^{t_2}}_{\text{boundary term}} - \int_{t_1}^{t_2} \underbrace{\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}}_{\text{derivative moves here}} \cdot \delta q\; dt$$
 
-The boundary term vanishes. We imposed $\delta q = 0$ at $t_1$ and $t_2$ — the endpoints are fixed, we're only varying the middle. So the boundary term is zero at both ends.
+The boundary term vanishes. The boundary term is a product with $\frac{\partial L}{\partial \dot{q}}$ evaluated at the endpoint and being multiplied by $\delta q$ evaluated at the endpoint. We imposed $\delta q = 0$ at $t_1$ and $t_2$: the endpoints are fixed, we're not nudging them. Zero times anything is zero.
 
-Substituting back, $\delta S$ splits into two clean integrals, both now in $\delta q$:
+Substituting back, $\delta S$ splits into two integrals, both now in $\delta q$:
 
 $$\delta S = \int_{t_1}^{t_2} \frac{\partial L}{\partial q}\,\delta q\; dt - \int_{t_1}^{t_2} \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\,\delta q\; dt = 0$$
 
@@ -58,31 +58,41 @@ We have:
 
 $$\int_{t_1}^{t_2} \left[\frac{\partial L}{\partial q} - \frac{d}{dt}\frac{\partial L}{\partial \dot{q}}\right]\delta q\; dt = 0$$
 
-The temptation is to immediately declare the bracket zero. But this step is the one that most treatments wave through, and it's worth being honest about why it isn't obvious.
+The temptation is to immediately declare the bracket zero, it is however worth it to be honest about why it's not so obvious.
 
-An integral being zero doesn't usually tell you anything about the integrand. $\int_0^1 x\, dx - \int_0^1 (1-x)\, dx = 0$, but neither integrand is zero anywhere on $[0,1]$ — the positive and negative parts simply cancel. So why can we conclude the bracket is zero here?
+An integral being zero doesn't usually tell you anything about the integrand. $\int_0^1 x\, dx - \int_0^1 (1-x)\, dx = 0$, but neither integrand is zero anywhere on $[0,1]$. The positive and negative parts just cancel. So why can we conclude the bracket is zero here?
 
-First, let's be precise about what $\delta q$ actually is. It isn't a single nudge at one instant — it's a _function_ over the whole path. It says, for every moment $t$ between $t_1$ and $t_2$, how much we're shifting the path at that moment. It can be shaped however we like: a bump near the start, two bumps in the middle, anything — as long as it's smooth and zero at the endpoints.
+It helps to first be precise about what $\delta q$ actually is. It's not a single nudge at one instant. It's a function over the whole path: take the original path $q(t)$ and shift it to $q(t) + \delta q(t)$ — then $\delta q(t)$ is simply the gap between the two paths at each moment $t$. It can be shaped however we like, a bump near the start, two bumps in the middle, anything, as long as it's smooth and zero at the endpoints.
 
-And the condition we have isn't that the integral is zero for some particular $\delta q$. It's that the integral is zero for _every possible_ $\delta q$. Every shape. Every bump. Every choice. That is a much stronger demand.
+The condition we have isn't that the integral is zero for some particular $\delta q$. It's that the integral is zero for _every possible_ $\delta q$. Every shape. Every bump. Every choice. That is a much stronger demand than it first sounds.
 
-One edge case worth naming: $\delta q = 0$ everywhere is technically allowed — it just means no nudge at all, the original path. But $\int f \cdot 0 \, dt = 0$ for any $f$, so this tells us nothing. The condition only has teeth because we're also ranging over nudges that are genuinely nonzero in between the endpoints — bumps that are zero at $t_1$ and $t_2$ but positive somewhere in the middle. Those are the nudges that can expose a nonzero $f$.
+One edge case is worth naming: $\delta q = 0$ everywhere is technically allowed. It just means no nudge at all, the original path. But $\int f \cdot 0\, dt = 0$ for any $f$, so this tells us nothing. The condition only has teeth because we're also ranging over nudges that are genuinely nonzero somewhere in between the endpoints. Those are the ones that can expose a nonzero $f$.
 
-Call the bracket $f(t)$. The condition is: for every smooth function $\delta q$ vanishing at the endpoints,
+Call the bracket $f(t)$. The claim:
 
-$$\int_{t_1}^{t_2} f(t)\,\delta q(t)\, dt = 0$$
+$$\int_{t_1}^{t_2} f(t)\,\delta q(t)\, dt = 0 \quad \text{for every smooth } \delta q \text{ vanishing at the endpoints} \implies f = 0 \text{ everywhere}$$
 
-Now suppose $f$ is not identically zero — say it's positive at some moment $t^*$. Since $f$ is continuous, it stays positive on some small interval around $t^*$.
+We argue by contradiction.
 
-Here's the move: we get to choose $\delta q$, so we choose it to be a smooth positive bump sitting entirely within that interval, and zero everywhere outside it. No dips, no cancellation — just a clean positive hump over the region where $f > 0$.
+Assume the integral is zero for every possible $\delta q$. Now suppose $f$ is nonzero somewhere — say positive at some moment $t^*$. Since $f$ is continuous, it stays positive on some small interval around $t^*$.
 
-With that choice, the integrand $f \cdot \delta q$ is positive on the interval and zero everywhere else. The integral strictly accumulates positive area and never gives any back. It cannot be zero.
+Construct a $\delta q$ that is a smooth positive bump sitting entirely within that interval and zero everywhere outside. This $\delta q$ is one of the every-possible-$\delta q$ the integral is supposed to vanish for. But with this choice, $f \cdot \delta q$ is positive on the interval and zero everywhere else — it strictly accumulates positive area and gives none back. The integral is not zero.
 
-That contradicts our condition. So $f$ cannot be positive anywhere. The same argument with a negative bump rules out $f$ being negative anywhere.
+That contradicts the assumption. So $f$ cannot be positive anywhere. The same argument with a negative bump rules out $f$ being negative anywhere.
 
 $f = 0$ everywhere.
 
-This is the _fundamental lemma of the calculus of variations_. The key wasn't any algebraic manipulation — it was the freedom to pick _any_ $\delta q$ we like. That freedom means we can always construct a nudge that exposes a nonzero $f$, if one exists. The only way the condition holds for every possible nudge is if $f$ gives the integral nothing to accumulate.
+This is the _fundamental lemma of the calculus of variations_. The key is to pick any $\delta q$ we like, that freedom means we can always construct a nudge that exposes a nonzero $f$, if one exists. The only way the condition survives every possible nudge is if $f$ gives the integral nothing to accumulate.
+
+<Callout type="note">
+  A smooth path is one with no kinks or sudden jumps — differentiable
+  everywhere, so $\dot{q}$ exists at every point along it. We restrict to smooth
+  paths not because non-smooth ones are mathematically forbidden, but because a
+  kink would require an infinite force at that instant to produce the
+  discontinuous change in velocity. That isn't physical for the systems we're
+  describing. Smoothness is an assumption about the physics, not a consequence
+  of the forces being conservative.
+</Callout>
 
 ## The Euler-Lagrange Equation
 
@@ -90,37 +100,39 @@ So the bracket is zero:
 
 $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}} - \frac{\partial L}{\partial q} = 0$$
 
-This is the Euler-Lagrange equation. Notice what happened: the fundamental lemma fired on a single integral with a single $\delta q$, giving us one equation. But most systems have more than one degree of freedom. A double pendulum has two angles. A particle in 3D has three coordinates. For each generalised coordinate $q_i$, we get a separate integral in $\delta q_i$, and the fundamental lemma fires independently on each one — because varying $q_i$ doesn't force a variation in $q_j$. One equation per coordinate:
+This is the Euler-Lagrange equation. Notice what happened: the fundamental lemma fired on a single integral with a single $\delta q$, giving us one equation. But most systems have more than one degree of freedom. A double pendulum has two angles. A particle in 3D has three coordinates. For each generalised coordinate $q_i$, we get a separate integral in $\delta q_i$, and the fundamental lemma fires independently on each one, because varying $q_i$ doesn't force a variation in $q_j$. One equation per coordinate:
 
 $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial q_i} = 0 \qquad i = 1, \ldots, n$$
 
 ## What the Two Terms Mean
 
-Before doing an example, it's worth pausing on what the equation actually says — because the algebra can obscure that it's something we already know.
+Before doing an example, it's worth pausing on what the equation actually says, because the algebra can make it easy to miss that it's something we already know.
 
-**The second term: generalised force.** $\frac{\partial L}{\partial q}$ is how the Lagrangian changes when the coordinate $q$ shifts. Since $L = K - U$, and kinetic energy usually doesn't depend directly on position, this is typically $-\frac{\partial U}{\partial q}$. That's the negative gradient of potential energy — which is the force: $F = -\nabla U$. So $\frac{\partial L}{\partial q}$ is the _generalised force_, the force pushing the system in the $q$ direction.
+Starting with the second term, $\frac{\partial L}{\partial q}$: this is how the Lagrangian responds to a shift in position. Since $L = K - U$, and kinetic energy doesn't depend on where you are, only on how fast you're moving, this is just $-\frac{\partial U}{\partial q}$. Potential energy is the only part of $L$ that cares about position. And $-\frac{\partial U}{\partial q}$ is the force we established in the first article: $F = -\nabla U$, because forces point toward lower potential energy, in the direction $U$ decreases most steeply. Think of $U$ as a landscape and the force as always pointing downhill. So $\frac{\partial L}{\partial q}$ is the force in whatever direction the coordinate $q$ points. We call it the _generalised force_.
 
-**The first term: generalised momentum.** Unpack $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$ from the inside out.
+Now the first term, $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}$. Let's unpack it from the inside out.
 
-Start with $\frac{\partial L}{\partial \dot{q}}$. In Cartesian coordinates, a free particle has $L = \frac{1}{2}m\dot{x}^2$, and:
+The inner piece, $\frac{\partial L}{\partial \dot{q}}$, is how the Lagrangian responds to a change in velocity. This time $U$ drops out entirely — conservative forces depend only on position, so $U$ has no $\dot{q}$ dependence and its derivative with respect to $\dot{q}$ is zero. What remains is $\frac{\partial K}{\partial \dot{q}}$.
 
-$$\frac{\partial L}{\partial \dot{x}} = m\dot{x}$$
+For a free particle moving in one dimension, $K = \frac{1}{2}m\dot{x}^2$, so:
 
-That's just $mv$ — ordinary momentum. So in Cartesian coordinates, $\frac{\partial L}{\partial \dot{q}}$ is exactly the momentum we know from Newton.
+$$\frac{\partial K}{\partial \dot{x}} = m\dot{x}$$
 
-Now consider the pendulum, where the coordinate is an angle $\theta$. We'll work this out fully in the next section, but the Lagrangian has $K = \frac{1}{2}ml^2\dot{\theta}^2$, so:
+That's $mv$. Ordinary momentum, what we know from Newton. Wasn't out intention to find it, we just differentiated $L$ with respect to velocity and it just appeared.
 
-$$\frac{\partial L}{\partial \dot{\theta}} = ml^2\dot{\theta}$$
+Now imagine we swap to a different coordinate. For a pendulum, the coordinate is an angle $\theta$ and $K = \frac{1}{2}ml^2\dot{\theta}^2$, so:
 
-This is not $mv$ — it has units of $\text{kg} \cdot \text{m}^2/\text{s}$, not $\text{kg} \cdot \text{m}/\text{s}$. It's _angular_ momentum. The coordinate was an angle, and $\frac{\partial L}{\partial \dot{q}}$ automatically gave us the right kind of momentum for that coordinate — without us having to decide in advance what "momentum" should mean for a rotational system.
+$$\frac{\partial K}{\partial \dot{\theta}} = ml^2\dot{\theta}$$
 
-This is why the quantity $\frac{\partial L}{\partial \dot{q}}$ is called the _generalised momentum_ conjugate to $q$. It isn't a definition by analogy. In Cartesian coordinates it _is_ $mv$. In angular coordinates it _is_ $I\omega$. It is whatever momentum means for the coordinate you chose, extracted automatically by differentiating $L$.
+This isn't $mv$. It has units of $\text{kg} \cdot \text{m}^2/\text{s}$, not $\text{kg} \cdot \text{m}/\text{s}$. It's angular momentum. We chose an angular coordinate and the Lagrangian handed us back the angular momentum automatically, without us having to think about what kind of momentum a rotating system should have.
 
-Taking the time derivative gives the rate of change of that momentum. So the full equation reads:
+$\frac{\partial L}{\partial \dot{q}}$ isn't defined by analogy to momentum and it isn't a coincidence that it looks like momentum in the Cartesian case. In Cartesian coordinates it _is_ $mv$. In angular coordinates it _is_ $ml^2\dot{\theta}$. It is whatever momentum means for the coordinate we chose, produced by differentiating $L$. That's why we give it a name: the _generalised momentum_ conjugate to $q$.
+
+Taking the time derivative of that generalised momentum gives the rate of change of momentum. So the full Euler-Lagrange equation reads:
 
 $$\underbrace{\frac{d}{dt}\frac{\partial L}{\partial \dot{q}}}_{\dot{p}} = \underbrace{\frac{\partial L}{\partial q}}_{F}$$
 
-Rate of change of momentum equals force. This is Newton's second law, $\dot{p} = F$, written in generalised coordinates. Not an approximation of it, not an analogy to it. The same equation, arrived at from the other direction.
+Rate of change of momentum equals force. That's Newton's second law, $\dot{p} = F$, written in generalised coordinates. Not an approximation of it, not an analogy to it. The same equation, arrived at from the other direction.
 
 ## Worked Example: The Simple Pendulum
 
@@ -130,17 +142,21 @@ The bob moves on a circle of radius $l$, so its speed is $l\dot{\theta}$. Kineti
 
 $$K = \frac{1}{2}ml^2\dot{\theta}^2$$
 
-Taking the pivot as reference, the height of the bob below the pivot is $l\cos\theta$, so potential energy:
+Taking the pivot as reference, the bob sits a height $l\cos\theta$ below it, so potential energy:
 
 $$U = -mgl\cos\theta$$
 
-When $\theta = 0$ the bob hangs straight down at its lowest point — $U = -mgl$, as low as it goes. As $\theta$ increases the bob rises and $U$ increases toward zero. The sign is correct.
+When $\theta = 0$ the bob hangs straight down, sitting a distance $l$ below the pivot. Taking the pivot as the reference point, that gives $U = -mgl$, it's negative because the bob is below the reference. As $\theta$ increases the bob rises toward the height of the pivot and $U$ increases from $-mgl$ toward $0$. The sign is correct.
+
+You might wonder why the pivot is the reference at all, rather than the ground or the Earth's surface. The answer is that potential energy is always defined up to an arbitrary constant. The physics only ever depends on _differences_ in $U$, never its absolute value. So we're free to place the zero wherever is convenient, and the pivot is convenient. If we'd chosen the ground as zero, every term would shift by the same constant and it would cancel out of the equations of motion.
+
+As $\theta$ increases the bob rises, $\cos\theta$ decreases, and $U$ becomes less negative, increasing toward zero. At $\theta = 90°$ the bob is level with the pivot and $U = 0$. Above the pivot it goes positive. The energy is increasing as the bob rises. That's the right behaviour.
 
 The Lagrangian:
 
 $$L = K - U = \frac{1}{2}ml^2\dot{\theta}^2 + mgl\cos\theta$$
 
-Now we just differentiate. The generalised momentum:
+Now we differentiate. The generalised momentum:
 
 $$\frac{\partial L}{\partial \dot{\theta}} = ml^2\dot{\theta}$$
 
@@ -162,12 +178,12 @@ Dividing through by $ml^2$:
 
 $$\boxed{\ddot{\theta} + \frac{g}{l}\sin\theta = 0}$$
 
-The exact equation of motion for a simple pendulum. The small-angle approximation $\sin\theta \approx \theta$ gives the familiar $\ddot{\theta} + \frac{g}{l}\theta = 0$ and the period $T = 2\pi\sqrt{l/g}$. But we never drew a free body diagram. We never resolved forces along and perpendicular to the rod. The tension in the rod — the constraint force — never appeared anywhere. D'Alembert eliminated it before we even started.
+The exact equation of motion for a simple pendulum. The small-angle approximation $\sin\theta \approx \theta$ gives the familiar $\ddot{\theta} + \frac{g}{l}\theta = 0$ and the period $T = 2\pi\sqrt{l/g}$. But notice what we never did: we never drew a free body diagram, never resolved forces along and perpendicular to the rod, and never had to think about the tension in the rod at all. The constraint force never appeared anywhere. D'Alembert eliminated it before we even started.
 
 <Callout type="insight">
   The Newtonian approach can't avoid the tension. You need it to write the force
-  balance. The Lagrangian approach never sees it. As the system grows — a double
-  pendulum, a pendulum on a moving cart — this advantage compounds fast.
+  balance. The Lagrangian approach never sees it. As the system grows, a double
+  pendulum, a pendulum on a moving cart, this advantage compounds fast.
 </Callout>
 
 ## What We Have
@@ -180,6 +196,6 @@ $$\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial
 
 To use it: write $K$ and $U$ in your chosen coordinates, form $L = K - U$, and differentiate. The equations of motion follow, with no free body diagrams and no constraint forces.
 
-One thing is worth noticing before we move on. If $\frac{\partial L}{\partial q_i} = 0$ — if the Lagrangian has no explicit dependence on some coordinate — the Euler-Lagrange equation immediately says $\frac{d}{dt}\frac{\partial L}{\partial \dot{q}_i} = 0$. The corresponding generalised momentum is conserved. A symmetry in the Lagrangian implies a conservation law.
+What we have now are the exact equations of motion for any conservative mechanical system — nonlinear, in whatever coordinates suit the problem, with no constraint forces in sight. That exactness is the point. The pendulum equation $\ddot{\theta} + \frac{g}{l}\sin\theta = 0$ makes no small-angle assumption. It is the full thing.
 
-That observation has a name: Noether's theorem. That's where this goes next.
+This was fun
