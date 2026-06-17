@@ -19,7 +19,7 @@ I'm a student trying to go through this paper. Did a couple researches to unders
 
 ## What we need to establish first
 
-The missile has no thrust, no engine engine, post-flameout, all the fuel is gone and it's simply gliding through the atmosphere with enough forward momentum that the air can still be used as a lever and all we can control are the fins.
+The missile has no thrust, no engine, post-flameout, all the fuel is gone and it's simply gliding through the atmosphere with enough forward momentum that the air can still be used as a lever and all we can control are the fins.
 
 The question the paper answers is: can you steer it to a prespecified line in space using only that lever?
 
@@ -63,29 +63,32 @@ C_{\text{lift}}(\langle v_x, b_x \rangle)\,
 \tag{1b}
 $$
 
-Equation (1a) is kinematics — velocity is the rate of change of position, nothing surprising. Equation (1b) is Newton's second law. The first term is gravity. The second term is lift: its _magnitude_ is determined by $C_\text{lift}$, a function of the angle between the body's nose direction $b_x$ and the velocity direction $v_x$, and its _direction_ is given by the double cross product, which is a vector perpendicular to $v_x$ lying in the plane spanned by $v_x$ and $b_x$. Drag is absent from this equation as the paper sets it aside as a separate effect, noting that it only changes speed, not direction, and the steering problem only cares about the perpendicular component.
+Equation (1a) is kinematics — velocity is the rate of change of position, nothing surprising. Equation (1b) is Newton's second law. The first term is gravity. The second term is lift: its magnitude is set by $C_\text{lift}$, a function of the angle between the nose direction $b_x$ and the velocity direction $v_x$, and its direction is given by the double cross product $(v_x \times b_x) \times v_x$ — a vector perpendicular to $v_x$, lying in the plane spanned by $v_x$ and $b_x$. Drag is absent from this equation because the paper sets it aside as a separate effect: it only changes speed, never direction, and the steering problem only cares about the perpendicular component.
 
-_Why does the double cross product give the lift direction?_ The expression $(v_x \times b_x) \times v_x$ takes $b_x$, removes its component along $v_x$, and leaves only the part perpendicular to $v_x$. It is a projection onto the plane we said lift lives in. The direction the nose is tilted relative to the airflow determines where in that plane the lift points — rotating the body around its own velocity axis (rolling) sweeps the lift vector around the full circle of that plane without changing its magnitude.
+Why does that double cross product give the lift direction? We can expand it with the vector triple product identity:
+
+$(v_x \times b_x) \times v_x = (v_x \cdot v_x)b_x - (v_x \cdot b_x)v_x$
+
+Since $v_x$ is a unit vector, $v_x \cdot v_x = 1$, so we're left with $b_x - (v_x \cdot b_x)v_x$, so $b_x$ with its component along $v_x$ subtracted off. The term $(v_x\cdot b_x)v_x$ is the projection of the nose direction onto the airflow direction: it measures how much of $b_x$ already agrees with $v_x$. Subtracting it strips that agreement away and leaves exactly the perpendicular leftover, sitting in the plane spanned by $v_x$ and $b_x$. That leftover is the lift direction.
+
+This also explains the rolling behaviour for free. Rolling the missile about its own velocity axis spins $b_x$ around $v_x$ in a cone, dragging the whole $v_x$–$b_x$ plane around with it, and the lift vector along with it. But rolling never changes how far $b_x$ leans away from $v_x$, only which compass heading it leans toward. So the lift vector sweeps a full circle in that plane without changing magnitude — the projection being stripped off never changes size, only orientation.
 
 ### Orientation is not an angle — it is a rotation matrix
 
 The body carries its own coordinate frame $\mathcal{B}$: $b_x$ points out the nose, $b_y$ to the right side, $b_z$ out the belly. These three axes are rigidly attached to the physical missile. As the missile rotates in space, they rotate with it.
 
-The inertial frame $\mathcal{I}$ is the NED frame — $i_x$ pointing North, $i_y$ East, $i_z$ Down, origin fixed at a point on the Earth's surface. This frame does not move.
+The inertial frame $\mathcal{I}$ is the NED frame: $i_x$ pointing North, $i_y$ East, $i_z$ Down, origin fixed at a point on the Earth's surface. This frame does not move.
 
 The orientation $R$ of the missile is the $3 \times 3$ rotation matrix whose columns are the body frame axes expressed in inertial coordinates. That is, the first column of $R$ is $b_x$ written as $(b_{x,N},\, b_{x,E},\, b_{x,D})$, and so on. It lives in $SO(3)$, the special orthogonal group — the set of all $3 \times 3$ real matrices satisfying $R^\top R = I_{3 \times 3}$ and $\det(R) = +1$.
 
 The rotational dynamics (eq. 1c–1d) are:
 
 $$
-\begin{align}
-\dot{r} &= v \tag{1a} \\
-\dot{v} &= g\,i_z +
-C_{\text{lift}}(\langle v_x,b_x\rangle)
-\frac{(v_x\times b_x)\times v_x}
-{\left\|(v_x\times b_x)\times v_x\right\|}
-\tag{1b}
-\end{align}
+\dot{R} = R\hat{\Omega} \tag{1c}
+$$
+
+$$
+I\dot{\Omega} = I\Omega \times \Omega + D(\Omega) + u \tag{1d}
 $$
 
 where $\Omega \in \mathbb{R}^3$ is the angular velocity of the body frame expressed in body coordinates, the hat map $\hat{\cdot}$ turns a 3-vector into a $3 \times 3$ skew-symmetric matrix (so $\hat{\Omega} v = \Omega \times v$ for any $v$), $I$ is the missile's inertia matrix, $D(\Omega)$ is a passive rotational drag term satisfying $\langle D(\Omega), \Omega \rangle \leq 0$, and $u \in \mathbb{R}^3$ is the applied torque — the only actual control input.
