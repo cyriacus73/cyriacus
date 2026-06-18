@@ -71,7 +71,9 @@ $(v_x \times b_x) \times v_x = (v_x \cdot v_x)b_x - (v_x \cdot b_x)v_x$
 
 Since $v_x$ is a unit vector, $v_x \cdot v_x = 1$, so we're left with $b_x - (v_x \cdot b_x)v_x$, so $b_x$ with its component along $v_x$ subtracted off. The term $(v_x\cdot b_x)v_x$ is the projection of the nose direction onto the airflow direction: it measures how much of $b_x$ already agrees with $v_x$. Subtracting it strips that agreement away and leaves exactly the perpendicular leftover, sitting in the plane spanned by $v_x$ and $b_x$. That leftover is the lift direction.
 
-This also explains the rolling behaviour for free. Rolling the missile about its own velocity axis spins $b_x$ around $v_x$ in a cone, dragging the whole $v_x$–$b_x$ plane around with it, and the lift vector along with it. But rolling never changes how far $b_x$ leans away from $v_x$, only which compass heading it leans toward. So the lift vector sweeps a full circle in that plane without changing magnitude — the projection being stripped off never changes size, only orientation.
+This also explains the rolling behaviour for free. Rolling the missile about its own velocity axis spins $b_x$ around $v_x$. Picture $b_x$ as a vector anchored at the origin, tip tilted away from $v_x$ by the angle of attack: as the body rolls, that tip traces a circle, while the vector itself — tail fixed, tip circling — sweeps out a cone with $v_x$ as its axis. Lift direction is exactly the part of $b_x$ perpendicular to $v_x$, so it rides along that same circle, the cone's rim. Rolling never changes how far $b_x$ leans away from $v_x$, only which compass heading it leans toward — the cone's half-angle stays fixed, only its orientation spins. So the lift vector sweeps a full circle without changing magnitude: the projection being stripped off never changes size, only direction.
+
+![Diagram showing the lift vector sweeping a cone](/article-images/bx_sweeps_a_cone.svg)
 
 ### Orientation is not an angle — it is a rotation matrix
 
@@ -91,7 +93,19 @@ $$
 I\dot{\Omega} = I\Omega \times \Omega + D(\Omega) + u \tag{1d}
 $$
 
-where $\Omega \in \mathbb{R}^3$ is the angular velocity of the body frame expressed in body coordinates, the hat map $\hat{\cdot}$ turns a 3-vector into a $3 \times 3$ skew-symmetric matrix (so $\hat{\Omega} v = \Omega \times v$ for any $v$), $I$ is the missile's inertia matrix, $D(\Omega)$ is a passive rotational drag term satisfying $\langle D(\Omega), \Omega \rangle \leq 0$, and $u \in \mathbb{R}^3$ is the applied torque — the only actual control input.
+where these terms represent the physical recipe for how a flying object spins:
+
+$\Omega$ (Angular Velocity in Body Coordinates): This is the missile's spin rate, measured from its own point of view (nose, right wing, belly). If we measured this from the stationary ground, the axes of rotation would constantly shift as the missile maneuvered. Locking the camera to the "body frame" keeps the axes fixed and the math manageable.
+
+The "Hat Map" ($\hat{\cdot}$): This operator turns a 3-vector into a $3 \times 3$ skew-symmetric matrix. Think of it purely as a formatting trick. Control algorithms and matrix calculus strongly prefer standard matrix multiplication over clunky vector cross products. The hat map simply rearranges the numbers so that $\hat{\Omega} v = \Omega \times v$, allowing us to use clean matrix algebra without altering the underlying geometry.
+
+$I\dot{\Omega}$ and $I$ (Inertial Resistance): Equation (1d) is the rotational twin of Newton's $F = ma$. $I$ is the inertia matrix, encoding how the missile's mass resists spinning—because of its dart-like shape, it is very easy to roll, but hard to tumble end-over-end. $\dot{\Omega}$ is the angular acceleration. Together, $I\dot{\Omega}$ represents the rate of change of angular momentum.
+
+$D(\Omega)$ (Rotational Drag): This represents the aerodynamic friction acting against the spin. The mathematical condition $\langle D(\Omega), \Omega \rangle \leq 0$ is a formal guarantee of passivity: this friction only ever acts as a brake to sap energy from the spin, never as an engine to speed it up.
+
+$u$ (Applied Torque): Amidst gravity, momentum, and air friction, this is the twisting force created by deflecting the missile's fins. It is the single control input in the entire system—the only steering wheel the autopilot actually gets to turn.
+
+$I\dot{\Omega}$ is the rate of change of angular momentum (expressed in the body frame), $\Omega \in \mathbb{R}^3$ is the angular velocity of the body frame expressed in body coordinates, the hat map $\hat{\cdot}$ turns a 3-vector into a $3 \times 3$ skew-symmetric matrix (so $\hat{\Omega} v = \Omega \times v$ for any $v$), $I$ is the missile's inertia matrix, $D(\Omega)$ is a passive rotational drag term satisfying $\langle D(\Omega), \Omega \rangle \leq 0$, and $u \in \mathbb{R}^3$ is the applied torque — the only actual control input.
 
 Notice the cascade structure: $b_x$, the first column of $R$, appears in the translational dynamics (1b). The orientation drives the lift force which drives the velocity which drives the position. This is why we need two loops.
 
