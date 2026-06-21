@@ -1,6 +1,6 @@
 ---
 title: "Steering Without an Engine: Path Following Control for a Gliding Missile"
-date: "2026-06-16"
+date: "2026-06-23"
 description: "Reading through D'Souza and Nielsen's 2022 IEEE paper on path following control for a thrust-free missile. What lift actually is, why two control loops are needed, and how error correction on a curved space differs from the LQR you already know. Sections I–III."
 tags:
   - control-theory
@@ -63,7 +63,7 @@ C_{\text{lift}}(\langle v_x, b_x \rangle)\,
 \tag{1b}
 $$
 
-Equation (1a) is kinematics — velocity is the rate of change of position, nothing surprising. Equation (1b) is Newton's second law. The first term is gravity. The second term is lift: its magnitude is set by $C_\text{lift}$, a function of the angle between the nose direction $b_x$ and the velocity direction $v_x$, and its direction is given by the double cross product $(v_x \times b_x) \times v_x$ — a vector perpendicular to $v_x$, lying in the plane spanned by $v_x$ and $b_x$. Drag is absent from this equation because the paper sets it aside as a separate effect: it only changes speed, never direction, and the steering problem only cares about the perpendicular component.
+Equation (1a) is kinematics — velocity is the rate of change of position, nothing surprising. Equation (1b) is Newton's second law. The first term is gravity. The second term is lift: its magnitude is set by $C_\text{lift}$, a function of the angle between the nose direction $b_x$ and the velocity direction $v_x$, and its direction is given by the double cross product $(v_x \times b_x) \times v_x$ — a vector perpendicular to $v_x$, lying in the plane spanned by $v_x$ and $b_x$. Given that drag acts strictly parallel and opposite to the velocity direction ($-v_x$​), it acts exclusively as a brake. It only bleeds off forward speed; it cannot push the missile sideways or bend the flight path. Furthermore, because this is an unpowered glider, there is no engine to throttle up and compensate for this braking effect—drag is entirely uncontrollable. Since the outer-loop control problem is purely about pushing the missile's trajectory onto a geometric line (which requires perpendicular forces), the model sets the uncontrollable "brakes" aside and focuses exclusively on the "steering wheel": the lift.
 
 Why does that double cross product give the lift direction? We can expand it with the vector triple product identity:
 
@@ -190,6 +190,205 @@ By applying the control law (Equation 5) to the rotational dynamics, the authors
 
 Because $SO(3)$ is a curved space, there's a risk the missile could get "stuck" balancing precisely 180 degrees away from the target (like a pendulum balanced upside down). To prove this won't happen, the authors use Rodrigues' rotation formula to show that the only place where the energy stops draining entirely (the only invariant set where $\dot{V} = 0$) is exactly at the target state $(R_d, 0)$. This guarantees the missile will asymptotically lock onto its assigned orientation.
 
+## The outer loop: from position error to demanded lift
+
+The outer loop's job is to turn a spatial position error into a pair of numbers, $w_1$ and $w_2$ — the demanded lift in the plane perpendicular to the missile's velocity. A final step, orientation extraction, then turns those virtual inputs into the desired orientation matrix $R_d$ that the fast inner loop already knows how to track.
+
+Getting from "the missile is off the line" to "here is the required lift $w_1, w_2$" is the core focus of Section IV, and it begins with a clever coordinate transformation.
+
+### A frame that rides the path
+
+Why not just measure the error using standard fixed Earth coordinates (North-East-Down)? Because NED mixes together two distinct concepts: how far _along_ the line the missile has traveled (which we don't care about), and how far _off to the side_ it is (which is the only thing we actually want to fix).
+
+To cleanly separate these, the paper builds a moving coordinate system, the **Frenet–Serret frame** ($\mathcal{S}$), that effectively rides along the target path, always anchoring itself to the point on the line closest to the missile.
+
+The path itself is parameterised as a unit-speed curve:
+
+$$
+\gamma(s) = \frac{p_1 - p_0}{\|p_1 - p_0\|}\,s + p_0, \qquad s \in [0, \|p_1-p_0\|]
+\tag{7}
+$$
+
+Walk a physical distance $s$ along the unit vector from the start $p_0$ toward the end $p_1$, and you land at $\gamma(s)$. Given the missile's current position $r$, the distance along the line to the closest point is:
+
+$$
+s^* := \frac{1}{\|p_1-p_0\|}\,\langle p_1 - p_0,\, r - p_0 \rangle
+\tag{8}
+$$
+
+This is the standard projection formula. If you drop a perpendicular line from the missile down to the path, $s^*$ is exactly where that perpendicular hits. The moving frame $\mathcal{S}$ is anchored right there at $\gamma(s^*)$. Its primary axis $s_x$ points straight down the line, while $s_y$ and $s_z$ define the cross-section (the plane perpendicular to the path).
+
+### The Error Coordinates: How far and how fast
+
+With this moving frame attached to the path, we can translate the missile's messy 3D flight dynamics into six highly intuitive numbers:
+
+$$
+\begin{aligned}
+\eta_1 &= \langle s_x,\, r-p_0\rangle, &
+\eta_2 &= \langle s_x,\, v\rangle, \\[4pt]
+\xi_1 &= \langle s_y,\, r-\gamma(\eta_1)\rangle, &
+\xi_2 &= \langle s_z,\, r-\gamma(\eta_1)\rangle, \\[4pt]
+\xi_3 &= \langle s_y,\, v\rangle, &
+\xi_4 &= \langle s_z,\, v\rangle
+\end{aligned}
+\tag{9}
+$$
+
+To simplify things for the controller, these are grouped into two distinct error vectors:
+
+$$
+e_1 := \binom{\xi_1}{\xi_2}, \qquad e_2 := \binom{\xi_3}{\xi_4}
+\tag{10}
+$$
+
+Here is what these states actually represent in the physical world:
+
+- **$\eta_1$:** Exactly $s^*$ under another name. It is **how far** you are along the path.
+- **$\eta_2$:** The rate of change of $\eta_1$. It is **how fast** you are moving down the path. Because this is a path following problem (not trajectory tracking), the controller completely ignores these two variables.
+- **$e_1$ (The Position Error):** This is your cross-track error. It measures exactly **how far off-center** the missile is from the path in the $y$ and $z$ directions.
+- **$e_2$ (The Velocity Error):** This is your drift. It measures **how fast you are sliding** away from (or towards) the center line.
+
+Driving $e_1$ to zero pushes the missile onto the line; driving $e_2$ to zero acts as a damping mechanism to ensure the missile settles perfectly onto the path instead of overshooting and sailing out the other side.
+
+### The Decoupling Matrix and The Singularity
+
+Rewriting the translational dynamics (3) into these new error coordinates gives:
+
+$$
+\dot{\eta}_1 = \eta_2, \qquad
+\dot{\eta}_2 = g\langle s_x,i_z\rangle + w_1\langle s_x,v_y\rangle + w_2\langle s_x,v_z\rangle
+\tag{11a}
+$$
+
+$$
+\dot{e}_1 = e_2, \qquad
+\dot{e}_2 = g\binom{\langle s_y,i_z\rangle}{\langle s_z,i_z\rangle} + F(v)\binom{w_1}{w_2}
+\tag{11b}
+$$
+
+where the matrix $F(v)$ is defined as:
+
+$$
+F(v) := \begin{pmatrix}\langle s_y,v_y\rangle & \langle s_y,v_z\rangle \\ \langle s_z,v_y\rangle & \langle s_z,v_z\rangle\end{pmatrix}
+\tag{12}
+$$
+
+Look at the error dynamics in (11b): $\dot{e}_1 = e_2$ and $\dot{e}_2 = (\text{gravity}) + F(v)\binom{w_1}{w_2}$. If you strip away the gravity term, this is a classic double integrator — you have a position, a velocity, and an input driving the acceleration.
+
+The only thing separating us from a clean, basic linear control law is **$F(v)$, the decoupling matrix**.
+Think of $F(v)$ much like a **Jacobian matrix** in robotics or non-linear control. It acts as a mechanical translator, describing exactly how a change in our virtual lift inputs ($w_1, w_2$) will manifest as actual physical acceleration ($\dot{e}_2$) toward the path, based on the missile's current velocity.
+
+But when can we trust this translator? **Proposition 1** states that $F(v)$ becomes mathematically singular (un-invertible) if and only if $\langle s_x, v_x \rangle = 0$.
+
+- **The Physical Meaning:** This condition means the missile's velocity vector is perfectly perpendicular to the path. In other words, the missile is **hovering sideways** relative to the target line, with zero forward momentum down the pipe.
+- Because lift requires forward airflow over the fins, a glider moving purely sideways has no aerodynamic authority to push itself in two independent directions. The math breaks exactly where the physics breaks. As long as the missile maintains a forward trajectory along the path, $F(v)$ remains healthy.
+
+### Section IV-A vs. IV-B: The Ideal vs. The Practical
+
+Before looking at the two control options, it helps to understand what it actually means for $F(v)$ to be **invertible**. In control theory, a matrix is invertible if it provides a perfect, two-way street between cause and effect. If $F(v)$ maps your lift ($w_1, w_2$) to your missile's acceleration, $F(v)^{-1}$ maps your _desired_ acceleration exactly back to the required lift. As Proposition 1 established, this matrix loses its invertibility (becomes singular) only if the missile is hovering perfectly sideways. In that state, the two control knobs ($w_1$ and $w_2$) can no longer independently control the two error directions.
+
+As long as the missile has forward momentum and $F(v)$ remains invertible, the paper presents two distinct ways to calculate the steering inputs.
+
+#### 1. Exact Feedback Linearization (The Mathematical Ideal)
+
+The most direct approach is to force the system to be linear by calculating that exact inverse:
+
+$$
+\binom{w_1}{w_2} = F(v)^{-1}\left(-g\binom{\langle s_y,i_z\rangle}{\langle s_z,i_z\rangle} + K\binom{e_1}{e_2}\right)
+\tag{13}
+$$
+
+Let's break down the signs and the logic here:
+
+- **The Gravity Term ($-g$):** In the physical world, gravity is a positive force pulling the missile's error downward. The controller uses a negative sign ($-g$) to calculate an exact "upward" force to perfectly cancel gravity out before it even thinks about steering.
+- **The Gain Term ($+K$):** To fix the error, the system needs to act like a restoring spring, which requires a negative feedback loop (pulling in the opposite direction of the error). While the equation says $+K$, in control theory, the matrix $K$ is designed to secretly contain negative values to pull the error ($e_1, e_2$) to zero.
+- **The Inverse ($F(v)^{-1}$):** By wrapping both of these terms in the inverse, we perfectly cancel out all the messy, curvy, non-linear aerodynamics.
+
+The resulting closed-loop system acts like a flawless textbook linear system. However, this is purely theoretical. In practice, calculating $F(v)^{-1}$ in real-time is computationally expensive and physically brittle. If a temporary gust of wind shifts the velocity vector, the inverse calculation can spike, commanding highly aggressive and jittery fin corrections. If the missile even _approaches_ the singularity, the math tries to divide by near-zero and blows up.
+
+#### 2. Linear Feedback with Frame Compensation (The Engineering Reality)
+
+To avoid the risks of the inverse, Equation (14) swaps $F(v)^{-1}$ for its transpose, $F(v)^\top$, sacrificing mathematical perfection for robustness:
+
+$$
+\binom{w_1}{w_2} = -g\binom{\langle i_z,v_y\rangle}{\langle i_z,v_z\rangle} + F(v)^\top\!\left(k_p e_1 + k_d e_2\right), \qquad k_p, k_d < 0
+\tag{14}
+$$
+
+_(Note: The gravity compensation $-g$ is still here, just moved outside the matrix term. And while the previous equation hid its negative feedback inside the $K$ matrix, here the negative signs are pulled out into the open by explicitly defining $k_p, k_d < 0$. It acts exactly like an ordinary damped spring: $\ddot{e} + |k_d|\dot{e} + |k_p|e = 0$.)_
+
+But why is the transpose a valid stand-in for the inverse? This is a classic robotics technique known as **Jacobian Transpose Control**.
+
+- The **inverse** calculates the mathematical "perfect" steering angle to cancel every aerodynamic cross-coupling. It tries to force the missile down a mathematically straight line, no matter how hard the control surfaces have to work.
+- The **transpose** is a rougher, but safer, estimate. In linear algebra, if a matrix maps forces to movements, its transpose maps desired movements into forces that are _directionally correct_. It essentially acts like a ball rolling down a hill: it might not calculate the mathematically straightest path to the bottom, but it guarantees that the control effort is always pushing "downhill" toward zero error.
+
+By using the transpose, the controller avoids division entirely, making it incredibly stable to compute. It leaves some non-linear "disturbances" behind, but the authors prove that these leftover disturbances are _quadratic_. As the missile gets closer to the line—where $e_1$ and $e_2$ approach zero—these quadratic disturbances shrink away significantly faster than the linear terms do.
+
+So, right where it matters most (near the path), this cheaper, smoother, and safer controller behaves almost indistinguishably from the "perfect" one. This numerical stability and physical smoothness are precisely why this transpose method is the one they actually flew on the real missile.
+
+### Orientation extraction
+
+Whichever law produced $w_1, w_2$, there is still a physical gap to close: the missile does not have direct side-thrusters to generate $w_1, w_2$. It only has tail fins. The fins rotate the nose, and the entire body's orientation relative to the oncoming wind is what actually generates the massive lift forces. Orientation extraction is the step that translates the outer loop's demand for lift into a target 3D orientation that the inner loop can actually chase.
+
+We start by placing the real aerodynamic lift equation side-by-side with our demanded lift:
+
+$$
+w_1 v_y + w_2 v_z = C_\text{lift}(\langle v_x,b_x\rangle)\,\frac{(v_x\times b_x)\times v_x}{\|(v_x\times b_x)\times v_x\|}
+\tag{16}
+$$
+
+To figure out how to orient the missile to make this equation true, we write out our _desired_ nose direction in velocity-frame components:
+
+$$
+b_x = m_x v_x + m_y v_y + m_z v_z
+\tag{17}
+$$
+
+_(Note: While this is the physical body axis $b_x$, we are calculating its target state, which is why we map it using our desired components $m_x, m_y, m_z$.)_
+
+By substituting (17) into (16) and matching magnitudes on both sides, we get one equation with one unknown:
+
+$$C_\text{lift}(m_x) = \sqrt{w_1^2 + w_2^2}$$
+
+Because Assumption 3 (back in Section II) guaranteed that $C_\text{lift}$ is strictly decreasing over the relevant range, we can invert this function to solve uniquely for $m_x$.
+
+- **The Physical Meaning:** $m_x$ tells us the _total_ tilt (angle of attack plus sideslip) the nose needs away from the velocity vector to generate the raw magnitude of the demanded lift.
+
+Once $m_x$ is known, we have the required tilt, but not the direction—the nose could be pointing anywhere along a "cone of ambiguity" relative to the wind. Matching the _direction_ of the demanded lift against the real lift formula pins down the remaining coordinates:
+
+$$
+\begin{aligned}
+m_y = \sqrt{1-m_x^2}\,\cos\big(\arg(w_1+jw_2)\big), &
+\qquad m_z = \sqrt{1-m_x^2}\,\sin\big(\arg(w_1+jw_2)\big)
+\end{aligned}
+\tag{18}
+$$
+
+That phase term, $\arg(w_1+jw_2)$, is doing something highly intuitive: it is literally the compass heading of the demanded lift vector in the perpendicular $(v_y,v_z)$ plane. It tells the missile exactly which way around the cone to lean. $m_x$ sets how far the nose leans away from the wind, and this phase angle sets exactly which direction it leans toward to get the lift pointing the right way.
+
+#### Resolving the Roll Ambiguity
+
+This pins down $b_x$ completely—we know exactly where the nose needs to point in 3D space. But $b_x$ alone isn't a full orientation. There is still one degree of freedom left over: the roll about the nose direction itself. You could point the nose perfectly, but the missile could be right-side up, upside down, or sideways.
+
+Rather than giving a universal rule, the paper resolves this with a practical worked example. Suppose the missile has a sensor or antenna on its belly that needs to face the ground. We need to lock the roll so the bottom of the missile ($b_z$) points generally downward.
+
+Writing the target nose vector $b_x = b_1 i_x + b_2 i_y + b_3 i_z$ in standard inertial (Earth) coordinates, the paper uses the global gravity down-vector ($i_z$) and a couple of cross products to build the rest of the frame:
+
+$$b_z := b_x \times (i_z \times b_x)$$
+
+The paper demonstrates that as long as the missile isn't pointed perfectly straight up or down, the projection of this $b_z$ onto $i_z$ is always positive. This mathematically guarantees that the "belly" vector really does point generally toward the ground. From there, the frame completes itself geometrically to find the right wing: $b_y = b_z \times b_x$, enforcing a standard right-handed relation.
+
+#### The Final Handoff
+
+That is the full chain, start to finish:
+
+1. Position error in moving-frame coordinates.
+2. Linear feedback law (exact or approximate) calculates demanded lift $(w_1,w_2)$.
+3. Orientation extraction converts lift into target nose coordinates $(m_x, m_y, m_z)$ and resolves the roll to find target axes $b_x, b_y, b_z$.
+4. Handed directly to the inner loop.
+
+While the paper never explicitly packages these three final vectors into a single "Desired Rotation Matrix" ($R_d$), generating these three orthogonal target axes is mathematically identical. The inner loop takes this complete target frame, compares it to its current gyro readings, and fires the fins to close the gap.
+
 ---
 
-_This covers Sections I–III of the paper. Next: the outer loop's error coordinates and the moving Frenet–Serret frame (Section IV), the two candidate outer-loop controllers and why one avoids a real-time matrix inverse, and the orientation extraction step that closes the loop between the two layers._
+_This covers Sections I–V of the paper._
