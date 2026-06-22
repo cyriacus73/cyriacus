@@ -1,0 +1,252 @@
+---
+title: "Steering Without an Engine: Path Following Control for a Gliding Missile"
+date: "2026-06-23"
+description: "Reading through D'Souza and Nielsen's 2022 IEEE paper on path following control for a thrust-free missile. What lift actually is, why two control loops are needed, and how error correction on a curved space differs from the LQR you already know. Sections I–VI."
+tags:
+  - control-theory
+  - aerospace
+  - path-following
+  - nonlinear-control
+  - lyapunov
+  - so3
+status: "draft"
+math: true
+---
+
+> D'Souza, R. S., & Nielsen, C. (2022). Path Following Control Design for a Gliding Missile. _IEEE Transactions on Aerospace and Electronic Systems_, 58(1), 485–495. [DOI: 10.1109/TAES.2021.3111785](https://doi.org/10.1109/TAES.2021.3111785)
+
+I'm a student working through this paper. These are the notes I wish I'd had when I first opened it — meant to be read alongside the paper, not instead of it. They fill in the physical intuition the paper reasonably assumes you already have, and flag the places where I'm still working things out. If the math or interpretation is wrong anywhere, email me.
+
+## What we need to establish first
+
+The missile has no thrust. Post-flameout, all the fuel is gone. It's gliding through the atmosphere on residual momentum, and the only thing the autopilot can touch are the fins.
+
+The question the paper answers: can you steer it onto a prespecified line in space using only that?
+
+Three things need to be in place before the control design makes sense: what forces act on the body, what "orientation" means precisely, and why this is a path following problem rather than a tracking problem.
+
+### The only forces in play
+
+Two forces act on a gliding body: gravity, and whatever the atmosphere does to it.
+
+Gravity is simple. In the NED (North–East–Down) inertial frame $\mathcal{I}$, gravity is a constant vector $g\, i_z$ pointing straight down. It never changes and the missile has no control over it.
+
+For the atmosphere: from the missile's own perspective, it is stationary while a wind streams past it, always from the direction of travel, at the same speed as the missile but opposing it. This relative airflow, $-v_x$ in the paper's notation, is the only source of aerodynamic force.
+
+The aerodynamic force decomposes into two pieces, defined by their direction relative to the velocity direction $v_x$:
+
+$$F_\text{aero} = \underbrace{(\text{component along } v_x)}_{\text{drag}} + \underbrace{(\text{component perpendicular to } v_x)}_{\text{lift}}$$
+
+The two pieces do fundamentally different things. Drag is anti-parallel to $v_x$ — it only slows the missile down. Lift lives in the plane perpendicular to $v_x$ — it curves the trajectory, changing direction without (to first order) changing speed.
+
+Lift is not always "up." That's a special case that holds when the missile is flying horizontally. In full generality, lift is a 2D vector in the plane perpendicular to $v_x$. That plane has basis $\{v_y, v_z\}$, and the outer loop's commanded inputs $w_1$ and $w_2$ are precisely the components of demanded lift along those two directions.
+
+The translational dynamics (equations 1a–1b in the paper) are:
+
+$$\dot{r}=v \tag{1a}$$
+
+$$\dot{v} = g\, i_z + C_{\text{lift}}(\langle v_x, b_x \rangle)\, \frac{(v_x \times b_x) \times v_x}{\|(v_x \times b_x) \times v_x\|} \tag{1b}$$
+
+Equation (1a) is kinematics. Equation (1b) is Newton's second law: gravity plus lift. Drag doesn't appear explicitly because it acts purely along $-v_x$ — it brakes forward speed but cannot bend the path. Since steering requires perpendicular forces and there's no engine to compensate for braking anyway, the model sets drag aside and works entirely with lift.
+
+The lift direction in (1b) comes from the double cross product $(v_x \times b_x) \times v_x$. Expanding with the vector triple product identity:
+
+$$(v_x \times b_x) \times v_x = (v_x \cdot v_x)\,b_x - (v_x \cdot b_x)\,v_x$$
+
+Since $v_x$ is a unit vector, this simplifies to $b_x - (v_x \cdot b_x)v_x$ — the nose direction $b_x$ with its component along the airflow direction subtracted off. What remains is exactly the part of $b_x$ that sticks out perpendicular to $v_x$. That perpendicular component is the lift direction.
+
+This also explains rolling behaviour. Rolling the missile about $v_x$ spins $b_x$ around the airflow axis. Picture $b_x$ anchored at the origin, its tip tilted away from $v_x$ by the angle of attack: as the body rolls, that tip traces a circle while sweeping out a cone with $v_x$ as its axis. Lift direction is exactly the part of $b_x$ perpendicular to $v_x$, so it rides along the same circle. Rolling never changes how far $b_x$ leans away from $v_x$ — the cone's half-angle is fixed, only its orientation spins. The lift vector sweeps a full circle without changing magnitude.
+
+![Diagram showing b_x sweeping out a cone around v_x](/article-images/bx_sweeps_a_cone.svg)
+
+### What orientation actually means
+
+The body carries its own coordinate frame $\mathcal{B}$: $b_x$ out the nose, $b_y$ to the right, $b_z$ out the belly — axes rigidly attached to the physical missile. The inertial frame $\mathcal{I}$ is NED: $i_x$ North, $i_y$ East, $i_z$ Down, origin fixed to the Earth.
+
+To say how the missile is pointed, we compare its axes to the fixed ground axes. That comparison is exactly the orientation $R$ — a $3 \times 3$ rotation matrix whose columns are the body frame axes written in inertial coordinates. $R$ lives in $SO(3)$, the set of all $3 \times 3$ real matrices satisfying $R^\top R = I_{3\times3}$ and $\det(R) = +1$. Saying $R \in SO(3)$ is a compact way of saying "this matrix encodes a legitimate rotation and nothing else."
+
+The rotational dynamics are:
+
+$$\dot{R} = R\hat{\Omega} \tag{1c}$$
+
+$$I\dot{\Omega} = I\Omega \times \Omega + D(\Omega) + u \tag{1d}$$
+
+$\Omega$ is the angular velocity expressed in body coordinates — the missile's spin rate as seen from its own axes. We express it in body coordinates rather than the ground frame because measuring from a stationary ground frame would mean the rotation axis constantly shifts as the missile maneuvers, making the equations unmanageable.
+
+The hat map $\hat{(\cdot)}$ converts a 3-vector into a $3 \times 3$ skew-symmetric matrix. It exists for one reason: (1c) needs to combine $\Omega$ with $R$, and you cannot directly multiply a matrix by a cross product. The hat map repackages "cross with $\Omega$" as an ordinary matrix multiplication, satisfying $\hat{\Omega}v = \Omega \times v$ for any vector $v$. The skew-symmetry condition $A^\top = -A$ forces the diagonal to zero and the off-diagonal entries to come in mirrored, sign-flipped pairs — leaving exactly three independent numbers, the same count as the vector it came from.
+
+$I$ is the inertia matrix: how hard the missile's mass is to spin about each of its own axes. The dart shape makes it easy to roll about the long axis and much harder to tumble end-over-end. Multiplying by $\Omega$ gives $I\Omega$, the angular momentum. Because $I$ is a matrix rather than a scalar, $I\Omega$ doesn't generally point the same way $\Omega$ does — spin the missile about an axis it resists, and the momentum tilts away from the spin axis to compensate. $I\dot{\Omega}$ is therefore the rate of change of angular momentum, the rotational analogue of $F = ma$.
+
+The term $I\Omega \times \Omega$ on the right of (1d) has no parallel in the linear dynamics. It appears because (1d) is written in the rotating body frame — even with zero applied torque, angular momentum can appear to change when measured from a spinning reference frame. This is the same physics that makes a thrown phone twist unpredictably mid-air instead of spinning cleanly. It's not something the controller adds; it's something the controller has to account for.
+
+$D(\Omega)$ is rotational drag: aerodynamic friction opposing the spin. The passivity condition $\langle D(\Omega), \Omega \rangle \leq 0$ formally guarantees this term only ever brakes the spin.
+
+$u$ is the applied torque from deflecting the fins. It's the only control input in the rotational dynamics.
+
+The cascade runs one way: orientation drives lift, lift drives velocity, velocity drives position. That cascade is the entire reason two loops are needed instead of one.
+
+### Path following, not trajectory tracking
+
+Most missile control is about chasing a target. This paper is about following a geometric line segment $\ell$ defined by two waypoints $p_0, p_1 \in \mathbb{R}^3$.
+
+The distinction isn't academic. A gliding missile cannot control its own speed. Trajectory tracking asks the vehicle to be at a specific position at a specific time — if it falls behind, it has to speed up to catch the reference. There's no thrust to do that. The tracking framework is simply wrong for this problem.
+
+Path following asks only that the center of mass converge onto $\ell$ and stay there. When along the line is irrelevant. The collection of all trajectories whose position lies on $\ell$ is called the _path following manifold_, and the control objective is to make this manifold a stable, attractive set. This is fundamentally a set stabilization problem, not a point stabilization problem.
+
+## Two loops, two time scales
+
+The system has a cascade structure and the paper leans on it directly. Orientation changes fast — a torque can reorient the body in a fraction of a second. Position changes slow — it takes much longer for that reorientation to visibly bend the flight path.
+
+This earns the two-loop architecture shown in Figure 3. The _inner loop_ (fast) treats orientation as the thing to control directly: given a desired orientation $R_d$, it applies torque $u$ to drive $(R, \Omega) \to (R_d, 0)$. It doesn't know or care about position.
+
+The _outer loop_ (slow) handles position. It designs a control law for the simplified system:
+
+$$\dot{r} = v, \qquad \dot{v} = g\,i_z + w_1 v_y + w_2 v_z \tag{3}$$
+
+where $w_1$ and $w_2$ are fictitious direct inputs to the lift plane — as though sideways thrusters existed. No such thrusters exist. But working with real lift directly would mean solving a nonlinear equation entangled with orientation at every step. Instead, the outer loop designs as if $w_1, w_2$ can be dialed in freely, then a separate _orientation extraction_ step translates whatever the outer loop demands into a real $R_d$ — one that, if achieved, produces exactly that sideways push through lift. The fiction is temporary; by the time anything is commanded to the fins, it's gone.
+
+This separation only works if the inner loop settles well before the outer loop has meaningfully progressed. The paper validates this in Figure 5: inner loop settling time around $0.1$ (normalised units), outer loop around $1$. An order of magnitude is enough to treat them as decoupled.
+
+## The inner loop: stabilising an orientation
+
+The inner loop's job: given a desired orientation $R_d$, apply torque so $(R, \Omega) \to (R_d, 0)$.
+
+_Why not just use Euler angles?_ Two obvious alternatives break down exactly where this missile operates. Euler angles suffer from gimbal lock: at certain orientations, two rotation axes align and a degree of freedom disappears from the math even though the physical missile still has it. Quaternions avoid that, but carry their own problem: every orientation corresponds to two quaternions $q$ and $-q$ representing the same physical rotation, which can cause a controller to unwind — rotating 359 degrees to fix a 1-degree error. Working directly on $SO(3)$ sidesteps both. The cost is that "how far apart are two orientations" requires matrix operations rather than simple subtraction.
+
+### The control law
+
+$$u = -k_p \left(\frac{(R_d^\top R - R^\top R_d)^\vee}{\sqrt{1 + \operatorname{tr}(R^\top R_d)}}\right) - k_d I\Omega, \qquad k_p, k_d > 0 \tag{5}$$
+
+At the right level of abstraction, this is a PD controller written for rotations.
+
+The second term, $-k_d I\Omega$, is the derivative part: it's proportional to current angular velocity and opposes it directly.
+
+The first term is the proportional part — the orientation error. $R^\top R_d$ is the rotation that takes the body's current orientation to the desired one. When $R = R_d$, it becomes the identity and there's no error. When there's a mismatch, the numerator isolates the antisymmetric part of that mismatch via $R_d^\top R - R^\top R_d$, and the $(\cdot)^\vee$ map converts the resulting skew-symmetric matrix back into a 3-vector: an axis pointing in the direction the missile needs to rotate to close the gap, scaled by how far off it is.
+
+The denominator $\sqrt{1 + \operatorname{tr}(R^\top R_d)}$ is a normalisation that rescales the proportional term as a function of how aligned $R$ and $R_d$ already are. Exactly why this particular form falls out of the stability proof is a black box for me right now — but what it does is keep the proportional term well-behaved across the full range of misalignments, including the awkward case where the missile is nearly 180 degrees from where it should be pointing.
+
+### Why it works
+
+The paper constructs a Lyapunov function:
+
+$$V(R, \Omega) = \frac{k_p}{2}\,\operatorname{tr}\!\left[(R^\top R_d - I_{3\times3})^\top(R^\top R_d - I_{3\times3})\right] + \sqrt{1+\operatorname{tr}(R^\top R_d)}\;\Omega^\top I\Omega \tag{6}$$
+
+The first term measures how far $R$ is from $R_d$ — zero when $R = R_d$, positive otherwise, acting as potential energy. The second term is rotational kinetic energy $\Omega^\top I\Omega$, scaled by the same square-root factor from (5), zero exactly when $\Omega = 0$.
+
+Substituting the control law (5) into the dynamics and working through the algebra, the paper shows $\dot{V} \leq 0$ on a neighbourhood $U$ of the target state. This makes $V$ non-increasing, so the system cannot escape $U$ once it's inside. But $\dot{V} \leq 0$ only proves the system doesn't blow up — it doesn't yet prove it actually reaches $(R_d, 0)$.
+
+To finish the argument, the paper applies LaSalle's invariance principle: find the largest set inside $\{\dot{V} = 0\}$ that is invariant under the dynamics, and show it contains only the target. On $\{\dot{V} = 0\}$, it follows that $\Omega = 0$, which means $\dot{\Omega} = 0$ as well. Substituting back into (1d) forces the orientation error term in (5) to zero. Using Rodrigues' rotation formula, the only rotation matrices satisfying that constraint within $U$ are $R = R_d$ (the target) and the antipodal case $\theta = \pi$ (180 degrees away). But the construction of $U$ explicitly excludes the antipodal case — so the largest invariant set in $\{\dot{V} = 0\} \cap U$ is exactly the point $(R_d, 0)$. Local asymptotic stability follows.
+
+The region $U$ is not just a technical artifact — the paper works out its boundary explicitly in the appendix, and that boundary is the real flight envelope estimate.
+
+## The outer loop: from position error to demanded lift
+
+The outer loop turns a spatial position error into demanded lift $(w_1, w_2)$ in the plane perpendicular to the missile's velocity. An orientation extraction step then converts those virtual inputs into the $R_d$ the inner loop tracks.
+
+### A frame that rides the path
+
+_Why not measure error in NED directly?_ Because NED mixes together how far along the line the missile has traveled (irrelevant) and how far off to the side it is (the only thing we want to fix).
+
+To separate these cleanly, the paper builds a moving coordinate system, the Frenet–Serret frame $\mathcal{S}$, that rides along the target path, always anchoring itself to the closest point on the line.
+
+The path is parameterised as a unit-speed curve:
+
+$$\gamma(s) = \frac{p_1 - p_0}{\|p_1 - p_0\|}\,s + p_0, \qquad s \in [0, \|p_1-p_0\|] \tag{7}$$
+
+Walk a physical distance $s$ along the unit vector from $p_0$ to $p_1$ and you land at $\gamma(s)$. Given the missile's current position $r$, the closest point on the line is $\gamma(s^*)$ where:
+
+$$s^* := \frac{1}{\|p_1-p_0\|}\,\langle p_1 - p_0,\, r - p_0 \rangle \tag{8}$$
+
+Drop a perpendicular from the missile down to the path — $s^*$ is exactly where it hits. The moving frame $\mathcal{S}$ anchors there: $s_x$ points along the line, while $s_y$ and $s_z$ span the cross-sectional plane perpendicular to it.
+
+### Error coordinates
+
+With the frame riding the path, the missile's 3D position and velocity project into six numbers:
+
+$$\begin{aligned} \eta_1 &= \langle s_x,\, r-p_0\rangle, & \eta_2 &= \langle s_x,\, v\rangle, \\ \xi_1 &= \langle s_y,\, r-\gamma(\eta_1)\rangle, & \xi_2 &= \langle s_z,\, r-\gamma(\eta_1)\rangle, \\ \xi_3 &= \langle s_y,\, v\rangle, & \xi_4 &= \langle s_z,\, v\rangle \end{aligned} \tag{9}$$
+
+$$e_1 := \binom{\xi_1}{\xi_2}, \qquad e_2 := \binom{\xi_3}{\xi_4} \tag{10}$$
+
+$\eta_1$ and $\eta_2$ are progress along the path and speed along the path respectively. Because this is path following, the controller ignores both. $e_1$ is the cross-track position error — how far off-center the missile is in the $s_y$ and $s_z$ directions. $e_2$ is the cross-track velocity — how fast it's sliding away from the centerline. Driving $e_1 \to 0$ puts the missile on the line; driving $e_2 \to 0$ provides the damping needed to prevent it from sailing through and out the other side.
+
+### The decoupling matrix
+
+Rewriting the simplified translational dynamics (3) in the new coordinates gives:
+
+$$\dot{e}_1 = e_2, \qquad \dot{e}_2 = g\binom{\langle s_y,i_z\rangle}{\langle s_z,i_z\rangle} + F(v)\binom{w_1}{w_2} \tag{11b}$$
+
+where:
+
+$$F(v) := \begin{pmatrix}\langle s_y,v_y\rangle & \langle s_y,v_z\rangle \\ \langle s_z,v_y\rangle & \langle s_z,v_z\rangle\end{pmatrix} \tag{12}$$
+
+Strip away gravity and this is a double integrator: position, velocity, input driving acceleration. The only thing standing between us and a clean linear control law is $F(v)$.
+
+$F(v)$ acts like a Jacobian — it describes how a change in the virtual lift inputs $(w_1, w_2)$ manifests as actual cross-track acceleration, given the missile's current velocity. Proposition 1 in the paper states that $F(v)$ becomes singular if and only if $\langle s_x, v_x \rangle = 0$: the missile's velocity is perpendicular to the path. Physically, a glider moving purely sideways has no aerodynamic authority to push itself in two independent directions. The math breaks exactly where the physics breaks.
+
+### Two control options
+
+Assuming $F(v)$ is invertible — i.e., the missile has some forward component along the path — the paper offers two designs.
+
+The first is exact feedback linearization:
+
+$$\binom{w_1}{w_2} = F(v)^{-1}\left[-g\binom{\langle s_y,i_z\rangle}{\langle s_z,i_z\rangle} + K\binom{e_1}{e_2}\right] \tag{13}$$
+
+Premultiplying by $F(v)^{-1}$ cancels the nonlinear aerodynamic coupling exactly, leaving linear closed-loop dynamics. The gain $K$ is then chosen to place the poles anywhere you like. Clean in theory. In practice, computing the inverse in real-time is expensive and physically brittle near the singularity — as $\langle s_x, v_x \rangle \to 0$, the inverse blows up and the commanded lift spikes.
+
+The second replaces $F(v)^{-1}$ with $F(v)^\top$:
+
+$$\binom{w_1}{w_2} = -g\binom{\langle i_z,v_y\rangle}{\langle i_z,v_z\rangle} + F(v)^\top\!\left(k_p e_1 + k_d e_2\right), \qquad k_p, k_d < 0 \tag{14}$$
+
+_Why is the transpose a valid stand-in?_ This is a standard technique from robotics. If a matrix maps inputs to outputs, its transpose maps desired outputs into inputs that push in the right direction — not the perfect input, but a directionally correct one. Concretely: after substituting (14) into the dynamics and collecting terms, the closed-loop becomes a linear double integrator plus disturbance terms that are quadratic in $e_1$ and $e_2$. Near the path, where $e_1$ and $e_2$ are small, quadratic terms vanish much faster than linear ones. The disturbances become negligible exactly where they need to matter most. The linearized dynamics at $(e_1, e_2) = (0,0)$ are:
+
+$$\binom{\dot{e}_1}{\dot{e}_2} = \begin{pmatrix}0_{2\times2} & I_{2\times2} \\ k_p I_{2\times2} & k_d I_{2\times2}\end{pmatrix}\binom{e_1}{e_2}$$
+
+With $k_p, k_d < 0$, this is a stable damped spring. Local exponential stability follows. No matrix inversion required, no singularity risk — this is the law they actually flew.
+
+### Orientation extraction
+
+Whichever law produced $(w_1, w_2)$, there's still a physical gap: the missile has no sideways thrusters. It only has fins. The fins rotate the nose, and the nose angle relative to the airflow is what generates lift. Orientation extraction translates the demanded lift into a target orientation $R_d$ that the inner loop can chase.
+
+We start by setting the real lift equation equal to the demanded lift:
+
+$$w_1 v_y + w_2 v_z = C_\text{lift}(\langle v_x,b_x\rangle)\,\frac{(v_x\times b_x)\times v_x}{\|(v_x\times b_x)\times v_x\|} \tag{16}$$
+
+Writing the desired nose direction in velocity-frame components:
+
+$$b_x = m_x v_x + m_y v_y + m_z v_z \tag{17}$$
+
+Substituting (17) into (16) and matching magnitudes on both sides gives a single equation in a single unknown:
+
+$$C_\text{lift}(m_x) = \sqrt{w_1^2 + w_2^2}$$
+
+Because Assumption 3 guarantees $C_\text{lift}$ is strictly decreasing over the operating range, this inverts uniquely to find $m_x$ — the cosine of the required angle of attack. It tells us how far the nose needs to lean away from the airflow to generate the right lift magnitude, but not which direction it should lean toward.
+
+Matching the direction of the demanded lift pins down the remaining coordinates:
+
+$$m_y = \sqrt{1-m_x^2}\,\cos(\arg(w_1+jw_2)), \qquad m_z = \sqrt{1-m_x^2}\,\sin(\arg(w_1+jw_2)) \tag{18}$$
+
+The phase $\arg(w_1+jw_2)$ is the compass heading of the demanded lift vector in the $(v_y, v_z)$ plane — literally which direction around the cone the nose should lean. $m_x$ sets how far it leans; this phase sets where.
+
+This fully determines $b_x$. But $b_x$ alone is not a full orientation — there's one degree of freedom left: roll about the nose direction. The paper resolves this with a concrete example. Suppose the belly-mounted sensor needs to face the ground: require $b_z$ to point generally downward. Writing $b_x = b_1 i_x + b_2 i_y + b_3 i_z$ in inertial coordinates and taking:
+
+$$b_z := b_x \times (i_z \times b_x)$$
+
+The projection of $b_z$ onto $i_z$ equals $1 - b_3^2$, which is strictly positive as long as the missile isn't pointed straight up or down. The right-wing vector completes the frame: $b_y = b_z \times b_x$.
+
+The full chain from position error to fin deflection: $e_1, e_2 \to (w_1, w_2) \to (m_x, m_y, m_z) \to (b_x, b_y, b_z) = R_d \to $ inner loop $\to u \to \delta$.
+
+## What the flight data actually shows
+
+Section V is where the assumptions get stress-tested on hardware. A few things are worth reading carefully.
+
+Figure 5 is the empirical validation of time-scale separation. The angle-of-attack settles in roughly $0.1$ normalised time units; the cross-track error settles in roughly $1$. That order-of-magnitude gap is what justifies treating the two loops as independent design problems. If it hadn't appeared in the data, the whole architecture would need to be reconsidered.
+
+The ascending path test (Figure 9) reveals the fundamental energy constraint. The missile climbs toward the path at the cost of forward speed. Figure 8 shows the canard deflections increasing steadily even after the missile settles at constant altitude — it's working harder and harder to hold altitude as airspeed drops. Eventually it hits stall speed and loses aerodynamic authority entirely. This is expected and by design: the mission is finite.
+
+The descending path test (Figures 10–12) is the more informative case. By allowing the missile to trade altitude for speed, it stays in the controllable flight envelope throughout. Even after losing over 20% of its initial speed, the cross-track error holds within meters of the reference. The control architecture doesn't fight the energy budget — it works with it.
+
+That connection runs back to the very first design choice in the paper. Path following rather than tracking means the controller never demands the missile be somewhere at a specific time — it only asks that the missile be on the line, on whatever schedule the physics allows. On a descending path, the physics cooperate.
+
+---
+
+_These notes cover Sections I–VI of the paper. The appendix proofs for Lemma 1 and Proposition 1 are referenced where relevant but not reconstructed here._
