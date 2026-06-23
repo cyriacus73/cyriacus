@@ -15,7 +15,7 @@ math: true
 
 > D'Souza, R. S., & Nielsen, C. (2022). Path Following Control Design for a Gliding Missile. _IEEE Transactions on Aerospace and Electronic Systems_, 58(1), 485–495. [DOI: 10.1109/TAES.2021.3111785](https://doi.org/10.1109/TAES.2021.3111785)
 
-I'm a student trying to go through this paper. THis is meant to be read alongside the paper, not a replacement. It primarily has physical intuition and background for the math that the paper assumes the reader already knows. If the math or interpretation is wrong anywhere, email me.
+I'm a student trying to go through this paper. This is meant to be read alongside the paper, not a replacement. It primarily has physical intuition and background for the math that the paper assumes the reader already knows. If the math or interpretation is wrong anywhere, email me.
 
 ## What we need to establish first
 
@@ -99,7 +99,7 @@ $I\dot{\Omega}$ is the rate of change of angular momentum, the rotational analog
 
 The term $I\Omega \times \Omega$ (Gyroscopic Torque) is the missile's own mass distribution pushing against its own rotation. It appears because (1d) is written in the rotating body frame — even with zero applied torque, angular momentum can appear to change when measured from a spinning reference frame.
 
-$D(\Omega)$ is rotational drag: aerodynamic friction opposing the spin. It is the air pushing aganist the body and it only ever brakes the spin.
+$D(\Omega)$ is rotational drag: aerodynamic friction opposing the spin. It is the air pushing against the body and it only ever brakes the spin.
 
 $u$ is the applied torque from deflecting the fins. It's the only control input in the rotational dynamics.
 
@@ -147,7 +147,7 @@ The second term, $-k_d I\Omega$, is the derivative part: it's proportional to cu
 
 The first term is the proportional part and is the orientation error. $R^\top R_d$ is the rotation that takes the body's current orientation to the desired one. WWhen $R = R_d$ exactly, $R^\top R_d$ becomes the identity matrix and there's no error. When there's a mismatch, the numerator isolates the antisymmetric part of that mismatch via $R_d^\top R - R^\top R_d$, and the $(\cdot)^\vee$ map converts the resulting skew-symmetric matrix back into a 3-vector: an axis pointing in the direction the missile needs to rotate to close the gap, scaled by how far off it is.
 
-The denominator $\sqrt{1 + \operatorname{tr}(R^\top R_d)}$ is a normalisation that rescales the proportional term as a function of how aligned $R$ and $R_d$ already are. Exactly why this exaxctly, I'm not sure but what it does is keep the proportional term well-behaved across the full range of misalignments, including the awkward case where the missile is nearly 180 degrees from where it should be pointing.
+The denominator $\sqrt{1 + \operatorname{tr}(R^\top R_d)}$ is a normalisation that rescales the proportional term as a function of how aligned $R$ and $R_d$ already are. Exactly why this exactly, I'm not sure but what it does is keep the proportional term well-behaved across the full range of misalignments, including the awkward case where the missile is nearly 180 degrees from where it should be pointing.
 
 ### Why it works
 
