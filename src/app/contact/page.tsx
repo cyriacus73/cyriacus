@@ -17,10 +17,10 @@ export default function ContactPage() {
           <div>
             <p className="font-mono text-sm text-text-muted mb-2">Email</p>
             <a
-              href="mailto:cyriacuselochukwu1@gmail.com"
+              href="mailto:cicada42@duck.com"
               className="text-text-primary hover:text-accent font-mono text-base transition-colors"
             >
-              cyriacuselochukwu1@gmail.com
+               cicada42@duck.com
             </a>
           </div>
 
